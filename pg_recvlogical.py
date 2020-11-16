@@ -113,9 +113,21 @@ def stdout(pghost, pgport, pgdatabase, pguser, pgpassword, pgslot, whitelist_reg
 
 @click.command()
 @click.option('--pghost', default=lambda: os.environ.get('PGHOST', None), required=True, help='Postgresql Host ($PGHOST)')
-def rabbitmq(pghost):
-    logging.basicConfig(level=logging.INFO)
-    logger.info('not yet implemented')
+@click.option('--pgport', default=lambda: os.environ.get('PGPORT', 5432), required=True, help='Postgresql Host ($PGPORT)')
+@click.option('--pgdatabase', default=lambda: os.environ.get('PGDATABASE', None), required=True, help='Postgresql Database ($PGDATABASE)')
+@click.option('--pguser', default=lambda: os.environ.get('PGUSER', None), required=True, help='Postgresql User ($PGUSER)')
+@click.option('--pgpassword', default=lambda: os.environ.get('PGPASSWORD', None), required=True, help='Postgresql Password ($PGPASSWORD)')
+@click.option('--pgslot', default=lambda: os.environ.get('PGSLOT', None), required=True, help='Postgresql Replication Slot Name ($PGSLOT)')
+@click.option('--whitelist-regex', required=False, help='Regex of schema.table to include - e.g. .*\.foo')
+@click.option('--blacklist-regex', required=False, help='Regex of schema.table to exclude - e.g. testns\..*')
+@click.option('--rabbitmq-url', default=lambda: os.environ.get('RABBITMQ_URL', None), required=True, help='RabbitMQ url ($RABBITMQ_URL)')
+def rabbitmq(pghost, pgport, pgdatabase, pguser, pgpassword, pgslot, whitelist_regex, blacklist_regex, rabbitmq_url):
+    logging.basicConfig(level=logging.DEBUG)
+    cur = init_cursor(pghost=pghost, pgport=pgport, pgdatabase=pgdatabase, pguser=pguser, pgpassword=pgpassword, pgslot=pgslot)
+    whitelist_regex_c = re.compile(whitelist_regex) if whitelist_regex else None
+    blacklist_regex_c = re.compile(blacklist_regex) if blacklist_regex else None
+    process_event_rabbitmq = process_event_stdout
+    cur.consume_stream(consume=lambda msg : consume_stream(msg=msg, whitelist_regex_c=whitelist_regex_c, blacklist_regex_c=blacklist_regex_c, process_event_fn=process_event_rabbitmq))
 
 # @cli.command('stdout')
 # @click.pass_context

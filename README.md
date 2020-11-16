@@ -20,7 +20,10 @@ export PGPORT=5432
 export PGDATABASE=test
 export PGUSER=postgres
 export PGPASSWORD=xxx
+export PGSLOT=test_slot
 ```
+
+Note that if you're running on Docker on Mac and want to connect to host machine, then set PGHOST to host.docker.internal and not localhost or 127.0.0.1.
 
 Then run the utility to print output to stdout
 ```
@@ -44,5 +47,41 @@ docker run -it -e PGHOST -e PGPORT -e PGDATABASE -e PGUSER -e PGPASSWORD -e RABB
 Then within the shell
 
 ```
-python stdout.py --pghost=foo
+python stdout.py
+```
+
+You can also get all the detailed commandline options using:
+```
+# python stdout.py --help
+Usage: stdout.py [OPTIONS]
+
+Options:
+  --pghost TEXT           Postgresql Host ($PGHOST)  [required]
+  --pgport TEXT           Postgresql Host ($PGPORT)  [required]
+  --pgdatabase TEXT       Postgresql Database ($PGDATABASE)  [required]
+  --pguser TEXT           Postgresql User ($PGUSER)  [required]
+  --pgpassword TEXT       Postgresql Password ($PGPASSWORD)  [required]
+  --pgslot TEXT           Postgresql Replication Slot Name ($PGSLOT)
+                          [required]
+  --whitelist-regex TEXT  Regex of schema.table to include - e.g. .*\.foo
+  --blacklist-regex TEXT  Regex of schema.table to exclude - e.g. testns\..*
+  --help                  Show this message and exit.
+```
+
+Similarly for sending data to rabbitmq, use the following options:
+```
+# python rabbitmq.py --help
+Usage: stdout.py [OPTIONS]
+
+Options:
+  --pghost TEXT           Postgresql Host ($PGHOST)  [required]
+  --pgport TEXT           Postgresql Host ($PGPORT)  [required]
+  --pgdatabase TEXT       Postgresql Database ($PGDATABASE)  [required]
+  --pguser TEXT           Postgresql User ($PGUSER)  [required]
+  --pgpassword TEXT       Postgresql Password ($PGPASSWORD)  [required]
+  --pgslot TEXT           Postgresql Replication Slot Name ($PGSLOT)
+                          [required]
+  --whitelist-regex TEXT  Regex of schema.table to include - e.g. .*\.foo
+  --blacklist-regex TEXT  Regex of schema.table to exclude - e.g. testns\..*
+  --help                  Show this message and exit.
 ```
