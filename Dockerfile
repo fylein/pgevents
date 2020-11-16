@@ -1,7 +1,7 @@
 FROM python:3.9-slim
 
-# RUN apt-get update && \
-#     apt-get install -y openssh-client gnupg git
+RUN apt-get update && \
+    apt-get install -y libpq-dev gcc
 
 #################################################
 # Install requirements
@@ -14,10 +14,10 @@ RUN pip install -r /tmp/requirements.txt
 # Copy over code
 #################################################
 
-RUN mkdir -p /fyle-pg-to-rabbitmq
+RUN mkdir -p /fyle-pg-recvlogical
 
-WORKDIR /fyle-pg-to-rabbitmq
+WORKDIR /fyle-pg-recvlogical
 
-COPY . /fyle-pg-to-rabbitmq/
-
-ENTRYPOINT [ "python", "pg-to-rabbitmq.py" ]
+COPY . /fyle-pg-recvlogical/
+RUN pip install .
+ENTRYPOINT [ "stdout" ]

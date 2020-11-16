@@ -1,4 +1,4 @@
-# fyle-pg-to-rabbitmq
+# fyle-pg-recvlogical
 
 Utility to generate events from PG using logical replication and push it to Rabbitmq.
 
@@ -7,7 +7,7 @@ Utility to generate events from PG using logical replication and push it to Rabb
 Easiest way is to use docker.
 
 ```
-docker build -t pg-to-rabbitmq .
+docker build -t fyle-pg-recvlogical .
 ```
 
 # Usage
@@ -30,7 +30,7 @@ export RABBITMQ_URL=yyy
 
 Then run the utility
 ```
-docker run -i -e PGHOST -e PGPORT -e PGDATABASE -e PGUSER -e PGPASSWORD --rm pg-to-rabbitmq
+docker run -i -e PGHOST -e PGPORT -e PGDATABASE -e PGUSER -e PGPASSWORD --rm fyle-pg-recvlogical stdout
 ```
 
 # Development
@@ -38,11 +38,11 @@ docker run -i -e PGHOST -e PGPORT -e PGDATABASE -e PGUSER -e PGPASSWORD --rm pg-
 Map the volume to the docker container and run the utility from within the container while you're making changes in the editor:
 
 ```
-docker run -it pg-to-rabbitmq --rm -v $(pwd):/fyle-pg-to-rabbitmq /bin/bash
+docker run -it -e PGHOST -e PGPORT -e PGDATABASE -e PGUSER -e PGPASSWORD --rm -v $(pwd):/fyle-pg_recvlogical --entrypoint=/bin/bash fyle-pg-recvlogical
 ```
 
 Then within the shell
 
 ```
-python /pg-to-rabbitmq.py
+python -m stdout
 ```
