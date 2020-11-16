@@ -20,4 +20,3 @@ WORKDIR /fyle-pg-recvlogical
 
 COPY . /fyle-pg-recvlogical/
 RUN pip install .
-ENTRYPOINT [ "stdout" ]

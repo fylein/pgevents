@@ -11,7 +11,11 @@ logger = logging.getLogger(__name__)
 
 @click.command()
 @click.option('--pghost', default=lambda: os.environ.get('PGHOST', None), required=True, help='Postgresql Host ($PGHOST)')
-def stdout(pghost):
+@click.option('--pgport', default=lambda: os.environ.get('PGPORT', 5432), required=True, help='Postgresql Host ($PGPORT)')
+@click.option('--pgdatabase', default=lambda: os.environ.get('PGDATABASE', None), required=True, help='Postgresql Database ($PGDATABASE)')
+@click.option('--pguser', default=lambda: os.environ.get('PGUSER', None), required=True, help='Postgresql User ($PGUSER)')
+@click.option('--pgpassword', default=lambda: os.environ.get('PGPASSWORD', None), required=True, help='Postgresql Password ($PGPASSWORD)')
+def stdout(pghost, pgport, pgdatabase, pguser, pgpassword):
     logging.basicConfig(level=logging.INFO)
     logger.info('pghost is %s', pghost)
 
