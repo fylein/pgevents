@@ -41,7 +41,7 @@ To read data from rabbitmq exchange
 ```
 export RABBITMQ_URL=yyy
 export RABBITMQ_EXCHANGE=copy
-docker run -i -e PGHOST -e PGPORT -e PGDATABASE -e PGUSER -e PGPASSWORD -e PGSLOT -e RABBITMQ_URL -e RABBITMQ_EXCHANGE --rm fyle-pg-recvlogical rabbitmq_reader
+docker run -i -e RABBITMQ_URL -e RABBITMQ_EXCHANGE --rm fyle-pg-recvlogical rabbitmq_reader
 ```
 
 # Development

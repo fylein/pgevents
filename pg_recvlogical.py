@@ -136,7 +136,7 @@ def create_rabbitmq_channel(rabbitmq_url, rabbitmq_exchange):
 @click.option('--rabbitmq-url', default=lambda: os.environ.get('RABBITMQ_URL', None), required=True, help='RabbitMQ url ($RABBITMQ_URL)')
 @click.option('--rabbitmq-exchange', default=lambda: os.environ.get('RABBITMQ_EXCHANGE', None), required=True, help='RabbitMQ exchange ($RABBITMQ_EXCHANGE)')
 def rabbitmq_writer(pghost, pgport, pgdatabase, pguser, pgpassword, pgslot, whitelist_regex, blacklist_regex, rabbitmq_url, rabbitmq_exchange):
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.DEBUG)
     db_cur = create_db_cursor(pghost=pghost, pgport=pgport, pgdatabase=pgdatabase, pguser=pguser, pgpassword=pgpassword, pgslot=pgslot)
     whitelist_regex_c = re.compile(whitelist_regex) if whitelist_regex else None
     blacklist_regex_c = re.compile(blacklist_regex) if blacklist_regex else None
@@ -149,7 +149,7 @@ def rabbitmq_writer(pghost, pgport, pgdatabase, pguser, pgpassword, pgslot, whit
 @click.option('--rabbitmq-url', default=lambda: os.environ.get('RABBITMQ_URL', None), required=True, help='RabbitMQ url ($RABBITMQ_URL)')
 @click.option('--rabbitmq-exchange', default=lambda: os.environ.get('RABBITMQ_EXCHANGE', None), required=True, help='RabbitMQ exchange ($RABBITMQ_EXCHANGE)')
 def rabbitmq_reader(rabbitmq_url, rabbitmq_exchange):
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.DEBUG)
     rabbitmq_channel = create_rabbitmq_channel(rabbitmq_url=rabbitmq_url, rabbitmq_exchange=rabbitmq_exchange)
     result = rabbitmq_channel.queue_declare('rabbitmq_reader', exclusive=False)
     queue_name = result.method.queue
