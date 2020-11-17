@@ -7,7 +7,7 @@ Utility to generate events from PG using logical replication and push it to Rabb
 Easiest way is to use docker.
 
 ```
-docker build -t fyle-pg-recvlogical .
+docker build -t sivafyle/fyle-pg-recvlogical .
 ```
 
 # Usage
@@ -27,21 +27,22 @@ Note that if you're running on Docker on Mac and want to connect to host machine
 
 Then run the utility to print output to stdout
 ```
-docker run -i -e PGHOST -e PGPORT -e PGDATABASE -e PGUSER -e PGPASSWORD -e PGSLOT --rm fyle-pg-recvlogical stdout_writer
+docker run -i -e PGHOST -e PGPORT -e PGDATABASE -e PGUSER -e PGPASSWORD -e PGSLOT --rm fyle-pg-recvlogical pg_to_stdout
 ```
 
 To send data to rabbitmq
 ```
 export RABBITMQ_URL=yyy
-export RABBITMQ_EXCHANGE=copy
-docker run -i -e PGHOST -e PGPORT -e PGDATABASE -e PGUSER -e PGPASSWORD -e PGSLOT -e RABBITMQ_URL -e RABBITMQ_EXCHANGE --rm fyle-pg-recvlogical rabbitmq_writer
+export RABBITMQ_EXCHANGE=table_exchange
+docker run -i -e PGHOST -e PGPORT -e PGDATABASE -e PGUSER -e PGPASSWORD -e PGSLOT -e RABBITMQ_URL -e RABBITMQ_EXCHANGE --rm fyle-pg-recvlogical pg_to_rabbitmq
 ```
 
 To read data from rabbitmq exchange
 ```
 export RABBITMQ_URL=yyy
-export RABBITMQ_EXCHANGE=copy
-docker run -i -e RABBITMQ_URL -e RABBITMQ_EXCHANGE --rm fyle-pg-recvlogical rabbitmq_reader
+export RABBITMQ_EXCHANGE=table_exchange
+export RABBITMQ_QUEUE_NAME=rabbitmq_to_stdout
+docker run -i -e RABBITMQ_URL -e RABBITMQ_EXCHANGE -e RABBITMQ_QUEUE_NAME --rm fyle-pg-recvlogical rabbitmq_to_stdout
 ```
 
 # Development
@@ -49,48 +50,18 @@ docker run -i -e RABBITMQ_URL -e RABBITMQ_EXCHANGE --rm fyle-pg-recvlogical rabb
 Map the volume to the docker container and run the utility from within the container while you're making changes in the editor:
 
 ```
-docker run -it -e PGHOST -e PGPORT -e PGDATABASE -e PGUSER -e PGPASSWORD -e PGSLOT -e RABBITMQ_URL -e RABBITMQ_EXCHANGE --rm -v $(pwd):/fyle-pg-recvlogical --entrypoint=/bin/bash fyle-pg-recvlogical
+docker run -it -e PGHOST -e PGPORT -e PGDATABASE -e PGUSER -e PGPASSWORD -e PGSLOT -e RABBITMQ_URL -e RABBITMQ_EXCHANGE -e RABBITMQ_QUEUE_NAME --rm -v $(pwd):/fyle-pg-recvlogical --entrypoint=/bin/bash fyle-pg-recvlogical
+```
+
+Now make changes to the python files. Then run the command from shell:
+
+```
+python pg_to_rabbitmq.py
 ```
 
 # Help
 
-## Stdout
 
 ```
-# python stdout.py --help
-Usage: stdout.py [OPTIONS]
-
-Options:
-  --pghost TEXT           Postgresql Host ($PGHOST)  [required]
-  --pgport TEXT           Postgresql Host ($PGPORT)  [required]
-  --pgdatabase TEXT       Postgresql Database ($PGDATABASE)  [required]
-  --pguser TEXT           Postgresql User ($PGUSER)  [required]
-  --pgpassword TEXT       Postgresql Password ($PGPASSWORD)  [required]
-  --pgslot TEXT           Postgresql Replication Slot Name ($PGSLOT)
-                          [required]
-  --whitelist-regex TEXT  Regex of schema.table to include - e.g. .*\.foo
-  --blacklist-regex TEXT  Regex of schema.table to exclude - e.g. testns\..*
-  --help                  Show this message and exit.
-
-```
-
-## Rabbitmq
-
-```
-# python rabbitmq.py --help
-Usage: rabbitmq.py [OPTIONS]
-
-Options:
-  --pghost TEXT             Postgresql Host ($PGHOST)  [required]
-  --pgport TEXT             Postgresql Host ($PGPORT)  [required]
-  --pgdatabase TEXT         Postgresql Database ($PGDATABASE)  [required]
-  --pguser TEXT             Postgresql User ($PGUSER)  [required]
-  --pgpassword TEXT         Postgresql Password ($PGPASSWORD)  [required]
-  --pgslot TEXT             Postgresql Replication Slot Name ($PGSLOT)
-                            [required]
-  --whitelist-regex TEXT    Regex of schema.table to include - e.g. .*\.foo
-  --blacklist-regex TEXT    Regex of schema.table to exclude - e.g. testns\..*
-  --rabbitmq-url TEXT       RabbitMQ url ($RABBITMQ_URL)  [required]
-  --rabbitmq-exchange TEXT  RabbitMQ exchange ($RABBITMQ_EXCHANGE)  [required]
-  --help                    Show this message and exit.
+# python pg_to_rabbitmq.py --help
 ```

@@ -4,7 +4,7 @@ from setuptools import setup
 setup(
     name="pg_recvlogical",
     version='0.1',
-    py_modules=['pg_recvlogical'],
+    py_modules=['pg_to_rabbitmq', 'pg_to_stdout', 'rabbitmq_to_stdout'],
     install_requires=[
         'pika==1.1.0',
         'psycopg2==2.8.6',
@@ -12,8 +12,8 @@ setup(
     ],
     entry_points='''
         [console_scripts]
-        stdout_writer=pg_recvlogical:stdout_writer
-        rabbitmq_writer=pg_recvlogical:rabbitmq_writer
-        rabbitmq_reader=pg_recvlogical:rabbitmq_reader
+        pg_to_rabbitmq=pg_to_rabbitmq:pg_to_rabbitmq
+        pg_to_stdout=pg_to_stdout:pg_to_stdout
+        rabbitmq_to_stdout=rabbitmq_to_stdout:rabbitmq_to_stdout
     ''',
 )
