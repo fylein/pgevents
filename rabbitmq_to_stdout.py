@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 def rabbitmq_to_stdout(rabbitmq_url, rabbitmq_exchange, binding_keys, queue_name):
     logging.basicConfig(level=logging.INFO)
     rabbitmq_channel = create_rabbitmq_channel(rabbitmq_url=rabbitmq_url, rabbitmq_exchange=rabbitmq_exchange)
-    result = rabbitmq_channel.queue_declare('', exclusive=False, auto_delete=True)
+    result = rabbitmq_channel.queue_declare(queue_name, durable=True, exclusive=False, auto_delete=False)
     queue_name = result.method.queue
     for binding_key in binding_keys.split(','):
         logging.info('binding to exchange %s, queue %s, binding_key %s', rabbitmq_exchange, queue_name, binding_key)
