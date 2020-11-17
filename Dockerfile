@@ -20,3 +20,5 @@ WORKDIR /fyle-pg-recvlogical
 
 COPY . /fyle-pg-recvlogical/
 RUN pip install .
+
+ENV PYTHONUNBUFFERED 1
