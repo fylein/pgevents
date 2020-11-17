@@ -1,9 +1,5 @@
-import os
-import json
 import pika
-import click
 import logging
-import re
 
 logger = logging.getLogger(__name__)
 

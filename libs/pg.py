@@ -1,13 +1,7 @@
-import os
-import json
 import psycopg2
 import psycopg2.errorcodes
 from psycopg2.extras import LogicalReplicationConnection
-import pika
-import click
 import logging
-import re
-from msg import consume_stream
 
 logger = logging.getLogger(__name__)
 
