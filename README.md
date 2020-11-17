@@ -12,7 +12,7 @@ docker build -t fyle-pg-recvlogical .
 
 # Usage
 
-Set the following environment variables to connect to PostgreSQL >= 10
+Set the following environment variables to connect to PostgreSQL >= 10 and to RabbitMQ as broker
 
 ```
 export PGHOST=xxx
