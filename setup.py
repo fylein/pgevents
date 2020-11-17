@@ -12,7 +12,8 @@ setup(
     ],
     entry_points='''
         [console_scripts]
-        stdout=pg_recvlogical:stdout
-        rabbitmq=pg_recvlogical:rabbitmq
+        stdout_writer=pg_recvlogical:stdout_writer
+        rabbitmq_writer=pg_recvlogical:rabbitmq_writer
+        rabbitmq_reader=pg_recvlogical:rabbitmq_reader
     ''',
 )

@@ -1,4 +1,4 @@
 import pg_recvlogical
 
 if __name__ == '__main__':
-    pg_recvlogical.rabbitmq()
+    pg_recvlogical.stdout_writer()
