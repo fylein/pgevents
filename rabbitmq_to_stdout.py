@@ -19,8 +19,8 @@ def rabbitmq_to_stdout(rabbitmq_url, rabbitmq_exchange, binding_keys, queue_name
         logging.info('binding to exchange %s, queue %s, binding_key %s', rabbitmq_exchange, queue_name, binding_key)
         rabbitmq_channel.queue_bind(exchange=rabbitmq_exchange, queue=queue_name, routing_key=binding_key)
     def callback(ch, method, properties, body):
-        logger.info("[received] %r:%r" % (method.routing_key, body))
-        print('[received] {method.routing_key} {body}')
+#        logger.info("[received] %r:%r" % (method.routing_key, body))
+        print(f'[received] {method.routing_key} {body}')
     rabbitmq_channel.basic_consume(queue=queue_name, on_message_callback=callback, auto_ack=True)
     rabbitmq_channel.start_consuming()
 

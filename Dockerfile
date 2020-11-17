@@ -19,7 +19,7 @@ RUN mkdir -p /fyle-pg-recvlogical
 WORKDIR /fyle-pg-recvlogical
 
 COPY . /fyle-pg-recvlogical/
-#RUN pip install .
+RUN pip install .
 
 ENV PYTHONUNBUFFERED 1
 CMD ["/bin/bash"]
