@@ -7,26 +7,6 @@ from libs.logging import init_logging
 
 logger = logging.getLogger(__name__)
 
-def clean_dict(d):
-    for k in d:
-        v = d[k]
-        if v is None:
-            del d[k]
-    return d
-
-def clean_event(event):
-    del event['types']
-    if event['kind'] == 'update':
-        event['old'] = None
-        event['new'] = None
-    if event['old']:
-        event['old'] = clean_dict(event['old'])
-    if event['new']:
-        event['new'] = clean_dict(event['new'])
-    if event['diff']:
-        event['diff'] = clean_dict(event['diff'])
-    return event
-
 class EventPrinter:
     def __init__(self, n=100):
         self.__counter = 0
@@ -34,7 +14,7 @@ class EventPrinter:
 
     def __call__(self, ch, method, properties, body):
         if self.__counter % self.__n == 0:
-            logger.info("got event %s %s", self.__counter, method.routing_key)
+            logger.info("got event %s %s %s", self.__counter, method.routing_key, body)
         self.__counter = self.__counter + 1
 
 
@@ -53,15 +33,7 @@ def rabbitmq_to_stdout(rabbitmq_url, rabbitmq_exchange, binding_keys, queue_name
         logger.info('binding to exchange %s, queue %s, binding_key %s', rabbitmq_exchange, queue_name, binding_key)
         rabbitmq_channel.queue_bind(exchange=rabbitmq_exchange, queue=queue_name, routing_key=binding_key)
 
-#     def callback(ch, method, properties, body):
-#         event = json.loads(body)
-# #        event = clean_event(event)
-#         if counter % 100 == 0:
-#             logger.info("got event %s %s", counter, method.routing_key)
-#         counter = counter + 1
-# #        print(f'[received] {method.routing_key} {event}')
-
-    rabbitmq_channel.basic_consume(queue=queue_name, on_message_callback=EventPrinter(n=100), auto_ack=True)
+    rabbitmq_channel.basic_consume(queue=queue_name, on_message_callback=EventPrinter(n=1), auto_ack=True)
     rabbitmq_channel.start_consuming()
 
 if __name__ == '__main__':
