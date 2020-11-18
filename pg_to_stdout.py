@@ -18,9 +18,8 @@ logger = logging.getLogger(__name__)
 @click.option('--pgslot', default=lambda: os.environ.get('PGSLOT', None), required=True, help='Postgresql Replication Slot Name ($PGSLOT)')
 @click.option('--whitelist-regex', required=False, help='Regex of schema.table to include - e.g. .*\.foo')
 @click.option('--blacklist-regex', required=False, help='Regex of schema.table to exclude - e.g. testns\..*')
-@click.option('--log-level', default='ERROR', required=False, help='Print lots of debug logs (DEBUG, INFO, WARN, ERROR)')
-def pg_to_stdout(pghost, pgport, pgdatabase, pguser, pgpassword, pgslot, whitelist_regex, blacklist_regex, log_level):
-    init_logging(log_level)
+def pg_to_stdout(pghost, pgport, pgdatabase, pguser, pgpassword, pgslot, whitelist_regex, blacklist_regex):
+    init_logging()
     db_cur = create_db_cursor(pghost=pghost, pgport=pgport, pgdatabase=pgdatabase, pguser=pguser, pgpassword=pgpassword, pgslot=pgslot)
     whitelist_regex_c = re.compile(whitelist_regex) if whitelist_regex else None
     blacklist_regex_c = re.compile(blacklist_regex) if blacklist_regex else None

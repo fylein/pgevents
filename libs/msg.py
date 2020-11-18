@@ -20,6 +20,8 @@ def __diff(oldv, newv):
                     d[k] = __diff(ov, nv)
                 else:
                     d[k] = nv
+            elif k == 'id':
+                d[k] = nv
         else:
             if ov is not None:
                 d[k] = None
