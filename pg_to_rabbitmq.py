@@ -15,7 +15,7 @@ from libs.logging import init_logging
 logger = logging.getLogger(__name__)
 
 def process_event_rabbitmq(rabbitmq_exchange, rabbitmq_channel, event):
-    routing_key = f'{event["table"]}.{event["kind"]}'
+    routing_key = event['routing_key']
     body = json.dumps(event, sort_keys=True, default=str)
     logger.debug('sending routing_key %s body %s ', routing_key, body)
     rabbitmq_channel.basic_publish(exchange=rabbitmq_exchange, routing_key=routing_key, body=body)

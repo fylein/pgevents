@@ -19,6 +19,6 @@ def create_db_cursor(pghost, pgport, pgdatabase, pguser, pgpassword, pgslot):
         else:
             logger.debug('slot already exists, reusing')
     logger.debug('start replication')
-    cur.start_replication(slot_name=pgslot, decode=True)
+    cur.start_replication(slot_name=pgslot, options={'format-version': 2, 'include-types': False, 'add-tables': 'public.*'}, decode=True)
     logger.debug('started consuming')
     return cur
