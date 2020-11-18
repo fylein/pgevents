@@ -12,7 +12,7 @@ def __diff(oldv, newv):
         return oldv
     d = {}
     for k in oldv.keys():
-        ov = oldv[v]
+        ov = oldv[k]
         if k in newv:
             nv = newv[k]
             if nv != ov:
@@ -21,11 +21,13 @@ def __diff(oldv, newv):
                 else:
                     d[k] = nv
         else:
-            d[k] = None
+            if ov is not None:
+                d[k] = None
     for k in newv.keys():
         if k not in oldv:
             nv = newv[k]
-            d[k] = nv
+            if nv is not None:
+                d[k] = nv
     return d
 
 def __clean_values(types, values):
