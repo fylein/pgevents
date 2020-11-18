@@ -11,7 +11,7 @@ def clean_dict(d):
     for k in d:
         v = d[k]
         if v is None:
-            del v[k]
+            del d[k]
     return d
 
 def clean_event(event):
