@@ -49,7 +49,8 @@ def __clean_values(types, values):
     return ret_values
 
 def __insert_event(change):
-    new_values = __clean_values(change['columntypes'], change['columnvalues'])
+#    new_values = __clean_values(change['columntypes'], change['columnvalues'])
+    new_values = change['columnvalues']
     event = {
         'kind': 'insert',
         'table': '{0}.{1}'.format(change['schema'], change['table']),
@@ -57,12 +58,15 @@ def __insert_event(change):
         'old': None,
         'new': dict(zip(change['columnnames'], new_values))
     }
-    event['diff'] = event['new']
+#    event['diff'] = event['new']
     return event
 
 def __update_event(change):
-    old_values = __clean_values(change['oldkeys']['keytypes'], change['oldkeys']['keyvalues'])
-    new_values = __clean_values(change['columntypes'], change['columnvalues'])
+    # old_values = __clean_values(change['oldkeys']['keytypes'], change['oldkeys']['keyvalues'])
+    # new_values = __clean_values(change['columntypes'], change['columnvalues'])
+
+    old_values = change['oldkeys']['keyvalues']
+    new_values = change['columnvalues']
     event = {
         'kind': 'update',
         'table': '{0}.{1}'.format(change['schema'], change['table']),
@@ -70,11 +74,12 @@ def __update_event(change):
         'old': dict(zip(change['oldkeys']['keynames'], old_values)),
         'new': dict(zip(change['columnnames'], new_values))
     }
-    event['diff'] = __diff(event['old'], event['new'])
+#    event['diff'] = __diff(event['old'], event['new'])
     return event
 
 def __delete_event(change):
-    old_values = __clean_values(change['oldkeys']['keytypes'], change['oldkeys']['keyvalues'])
+#    old_values = __clean_values(change['oldkeys']['keytypes'], change['oldkeys']['keyvalues'])
+    old_values = change['oldkeys']['keyvalues']
     event = {
         'kind': 'delete',
         'table': '{0}.{1}'.format(change['schema'], change['table']),
@@ -82,7 +87,7 @@ def __delete_event(change):
         'old': dict(zip(change['oldkeys']['keynames'], old_values)),
         'new': None
     }
-    event['diff'] = event['old']
+#    event['diff'] = event['old']
     return event
 
 def __msg_to_events_generator(msg):

@@ -44,9 +44,9 @@ def rabbitmq_to_stdout(rabbitmq_url, rabbitmq_exchange, binding_keys, queue_name
 
     def callback(ch, method, properties, body):
         event = json.loads(body)
-        event = clean_event(event)
-        logger.info("got event %s", event)
-        print(f'[received] {method.routing_key} {event}')
+#        event = clean_event(event)         
+        logger.info("got event %s", method.routing_key)
+#        print(f'[received] {method.routing_key} {event}')
 
     rabbitmq_channel.basic_consume(queue=queue_name, on_message_callback=callback, auto_ack=True)
     rabbitmq_channel.start_consuming()
