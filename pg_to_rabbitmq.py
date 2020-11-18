@@ -10,6 +10,7 @@ import re
 from libs.msg import consume_stream
 from libs.pg import create_db_cursor
 from libs.rabbitmq import create_rabbitmq_channel
+from libs.logging import init_logging
 
 logger = logging.getLogger(__name__)
 
@@ -30,8 +31,9 @@ def process_event_rabbitmq(rabbitmq_exchange, rabbitmq_channel, event):
 @click.option('--blacklist-regex', required=False, help='Regex of schema.table to exclude - e.g. testns\..*')
 @click.option('--rabbitmq-url', default=lambda: os.environ.get('RABBITMQ_URL', None), required=True, help='RabbitMQ url ($RABBITMQ_URL)')
 @click.option('--rabbitmq-exchange', default=lambda: os.environ.get('RABBITMQ_EXCHANGE', None), required=True, help='RabbitMQ exchange ($RABBITMQ_EXCHANGE)')
-def pg_to_rabbitmq(pghost, pgport, pgdatabase, pguser, pgpassword, pgslot, whitelist_regex, blacklist_regex, rabbitmq_url, rabbitmq_exchange):
-    logging.basicConfig(level=logging.INFO)
+@click.option('--log-level', default='ERROR', required=False, help='Print lots of debug logs (DEBUG, INFO, WARN, ERROR)')
+def pg_to_rabbitmq(pghost, pgport, pgdatabase, pguser, pgpassword, pgslot, whitelist_regex, blacklist_regex, rabbitmq_url, rabbitmq_exchange, log_level):
+    init_logging(log_level)
     db_cur = create_db_cursor(pghost=pghost, pgport=pgport, pgdatabase=pgdatabase, pguser=pguser, pgpassword=pgpassword, pgslot=pgslot)
     whitelist_regex_c = re.compile(whitelist_regex) if whitelist_regex else None
     blacklist_regex_c = re.compile(blacklist_regex) if blacklist_regex else None

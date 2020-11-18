@@ -4,13 +4,43 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+def __diff(oldv, newv):
+    logger.debug('calling diff on %s, %s', oldv, newv)
+    if oldv is None:
+        return newv
+    if newv is None:
+        return oldv
+    d = {}
+    for k in oldv.keys():
+        ov = oldv[v]
+        if k in newv:
+            nv = newv[k]
+            if nv != ov:
+                if isinstance(nv, dict):
+                    d[k] = __diff(ov, nv)
+                else:
+                    d[k] = nv
+        else:
+            d[k] = None
+    for k in newv.keys():
+        if k not in oldv:
+            nv = newv[k]
+            d[k] = nv
+    return d
+
 def __clean_values(types, values):
     ret_values = []
     for i, t in enumerate(types):
-        if t in ['jsonb', 'location', 'json']:
-            ret_values[i] = values[i].replace('\\"', '"')
+        if values[i] is None:
+            ret_values.append(values[i])
         else:
-            ret_values[i] = values[i]
+            if t in ['jsonb']:
+                v = json.loads(values[i])
+                ret_values.append(v)
+            elif t in ['location']:
+                ret_values.append(values[i].replace('\\"', '"'))
+            else:
+                ret_values.append(values[i])
     return ret_values
 
 def __insert_event(change):
@@ -22,11 +52,11 @@ def __insert_event(change):
         'old': None,
         'new': dict(zip(change['columnnames'], new_values))
     }
-#    event['diff'] = event['new']
+    event['diff'] = event['new']
     return event
 
 def __update_event(change):
-    old_values = __clean_values(change['columntypes'], change['oldkeys']['keyvalues']))
+    old_values = __clean_values(change['oldkeys']['keytypes'], change['oldkeys']['keyvalues'])
     new_values = __clean_values(change['columntypes'], change['columnvalues'])
     event = {
         'kind': 'update',
@@ -35,11 +65,11 @@ def __update_event(change):
         'old': dict(zip(change['oldkeys']['keynames'], old_values)),
         'new': dict(zip(change['columnnames'], new_values))
     }
-#    event['diff'] = None
+    event['diff'] = __diff(event['old'], event['new'])
     return event
 
 def __delete_event(change):
-    old_values = __clean_values(change['columntypes'], change['oldkeys']['keyvalues']))
+    old_values = __clean_values(change['oldkeys']['keytypes'], change['oldkeys']['keyvalues'])
     event = {
         'kind': 'delete',
         'table': '{0}.{1}'.format(change['schema'], change['table']),
@@ -47,13 +77,14 @@ def __delete_event(change):
         'old': dict(zip(change['oldkeys']['keynames'], old_values)),
         'new': None
     }
-#    event['diff'] = event['old']
+    event['diff'] = event['old']
     return event
 
 def __msg_to_events_generator(msg):
     obj = json.loads(msg.payload)
     if 'change' in obj:
         for change in obj['change']:
+            logger.debug('processing change %s', change)
             event = None
             if change['kind'] == 'insert':
                 event = __insert_event(change)
