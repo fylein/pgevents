@@ -1,0 +1,19 @@
+version: 1
+disable_existing_loggers: False
+formatters:
+  simple:
+    format: '%(asctime)s:%(levelname)s:%(name)s:%(message)s'
+handlers:
+  default:
+    class: logging.StreamHandler
+    level: DEBUG
+    formatter: simple
+    stream: ext://sys.stdout
+loggers:
+  pika:
+    level: ERROR
+    propagate: True
+root:
+  level: DEBUG
+  handlers: [default]
+  propagate: True
