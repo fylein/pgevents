@@ -27,6 +27,17 @@ def clean_event(event):
         event['diff'] = clean_dict(event['diff'])
     return event
 
+class EventPrinter:
+    def __init__(self, n=100):
+        self.__counter = 0
+        self.__n = n
+
+    def __call__(self, ch, method, properties, body):
+        if self.__counter % self.__n == 0:
+            logger.info("got event %s %s", self.__counter, method.routing_key)
+        self.__counter = self.__counter + 1
+
+
 @click.command()
 @click.option('--rabbitmq-url', default=lambda: os.environ.get('RABBITMQ_URL', None), required=True, help='RabbitMQ url ($RABBITMQ_URL)')
 @click.option('--rabbitmq-exchange', default=lambda: os.environ.get('RABBITMQ_EXCHANGE', None), required=True, help='RabbitMQ exchange ($RABBITMQ_EXCHANGE)')
@@ -42,13 +53,15 @@ def rabbitmq_to_stdout(rabbitmq_url, rabbitmq_exchange, binding_keys, queue_name
         logger.info('binding to exchange %s, queue %s, binding_key %s', rabbitmq_exchange, queue_name, binding_key)
         rabbitmq_channel.queue_bind(exchange=rabbitmq_exchange, queue=queue_name, routing_key=binding_key)
 
-    def callback(ch, method, properties, body):
-        event = json.loads(body)
-#        event = clean_event(event)         
-        logger.info("got event %s", method.routing_key)
-#        print(f'[received] {method.routing_key} {event}')
+#     def callback(ch, method, properties, body):
+#         event = json.loads(body)
+# #        event = clean_event(event)
+#         if counter % 100 == 0:
+#             logger.info("got event %s %s", counter, method.routing_key)
+#         counter = counter + 1
+# #        print(f'[received] {method.routing_key} {event}')
 
-    rabbitmq_channel.basic_consume(queue=queue_name, on_message_callback=callback, auto_ack=True)
+    rabbitmq_channel.basic_consume(queue=queue_name, on_message_callback=EventPrinter(n=100), auto_ack=True)
     rabbitmq_channel.start_consuming()
 
 if __name__ == '__main__':
