@@ -4,34 +4,50 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+def __clean_values(types, values):
+    ret_values = []
+    for i, t in enumerate(types):
+        if t in ['jsonb', 'location', 'json']:
+            ret_values[i] = values[i].replace('\\"', '"')
+        else:
+            ret_values[i] = values[i]
+    return ret_values
+
 def __insert_event(change):
+    new_values = __clean_values(change['columntypes'], change['columnvalues'])
     event = {
         'kind': 'insert',
         'table': '{0}.{1}'.format(change['schema'], change['table']),
         'types': dict(zip(change['columnnames'], change['columntypes'])),
         'old': None,
-        'new': dict(zip(change['columnnames'], change['columnvalues']))
+        'new': dict(zip(change['columnnames'], new_values))
     }
+#    event['diff'] = event['new']
     return event
 
 def __update_event(change):
+    old_values = __clean_values(change['columntypes'], change['oldkeys']['keyvalues']))
+    new_values = __clean_values(change['columntypes'], change['columnvalues'])
     event = {
         'kind': 'update',
         'table': '{0}.{1}'.format(change['schema'], change['table']),
         'types': dict(zip(change['columnnames'], change['columntypes'])),
-        'old': dict(zip(change['oldkeys']['keynames'], change['oldkeys']['keyvalues'])),
-        'new': dict(zip(change['columnnames'], change['columnvalues']))
+        'old': dict(zip(change['oldkeys']['keynames'], old_values)),
+        'new': dict(zip(change['columnnames'], new_values))
     }
+#    event['diff'] = None
     return event
 
 def __delete_event(change):
+    old_values = __clean_values(change['columntypes'], change['oldkeys']['keyvalues']))
     event = {
         'kind': 'delete',
         'table': '{0}.{1}'.format(change['schema'], change['table']),
         'types': dict(zip(change['oldkeys']['keynames'], change['oldkeys']['keytypes'])),
-        'old': dict(zip(change['oldkeys']['keynames'], change['oldkeys']['keyvalues'])),
+        'old': dict(zip(change['oldkeys']['keynames'], old_values)),
         'new': None
     }
+#    event['diff'] = event['old']
     return event
 
 def __msg_to_events_generator(msg):
