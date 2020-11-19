@@ -40,7 +40,7 @@ def __clean_columns(cols):
             c['value'] = json.loads(c['value'].replace('\\"', '"'))
         if c['type'] == 'location' and c['value'] is not None:
             c['value'] = c['value'].replace('\\"', '"')
-        if c['name'] == 'last_updated_by' and c['type'] == 'text' and c['value'] is not None:
+        if c['name'] in ['last_updated_by', 'extracted_data'] and c['type'] == 'text' and c['value'] is not None:
             c['value'] = json.loads(c['value'].replace('\\"', '"'))
             c['type'] = 'jsonb'            
     return cols
