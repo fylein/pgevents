@@ -10,6 +10,16 @@ Easiest way is to use docker.
 docker build -t fyle-pg-recvlogical .
 ```
 
+# Pre-requisites
+
+To get the logical decoding working correctly, you'll need to run set replica identity to full for the tables in question. Example:
+
+```
+alter table transactions replica identity full;
+```
+
+If you don't do this, the old value will not be sent during updates and deletes and the diffs may be incorrect.
+
 # Usage
 
 Set the following environment variables to connect to PostgreSQL >= 10 and to RabbitMQ as broker
@@ -21,6 +31,7 @@ export PGDATABASE=test
 export PGUSER=postgres
 export PGPASSWORD=xxx
 export PGSLOT=test_slot
+export PGTABLES=public.transactions,public.reports
 
 export RABBITMQ_URL=yyy
 export RABBITMQ_EXCHANGE=table_exchange
@@ -46,7 +57,7 @@ To read data from rabbitmq exchange and print it to stdout
 docker run -i -e RABBITMQ_URL -e RABBITMQ_EXCHANGE -e RABBITMQ_QUEUE_NAME --rm fyle-pg-recvlogical rabbitmq_to_stdout
 ```
 
-For detailed help, run the following command
+For detailed information, use the help flag
 
 ```
 $ docker run -i -e PGHOST -e PGPORT -e PGDATABASE -e PGUSER -e PGPASSWORD -e PGSLOT --rm fyle-pg-recvlogical pg_to_rabbitmq --help
@@ -60,11 +71,12 @@ Options:
   --pgpassword TEXT         Postgresql Password ($PGPASSWORD)  [required]
   --pgslot TEXT             Postgresql Replication Slot Name ($PGSLOT)
                             [required]
-  --whitelist-regex TEXT    Regex of schema.table to include - e.g. .*\.foo
-  --blacklist-regex TEXT    Regex of schema.table to exclude - e.g. testns\..*
+  --pgtables TEXT           Restrict to specific tables e.g.
+                            public.transactions,public.reports
   --rabbitmq-url TEXT       RabbitMQ url ($RABBITMQ_URL)  [required]
   --rabbitmq-exchange TEXT  RabbitMQ exchange ($RABBITMQ_EXCHANGE)  [required]
   --help                    Show this message and exit.
+
 ```
 
 # Development
@@ -72,7 +84,7 @@ Options:
 Map the volume to the docker container and run the utility from within the container while you're making changes in the editor:
 
 ```
-docker run -it -e PGHOST -e PGPORT -e PGDATABASE -e PGUSER -e PGPASSWORD -e PGSLOT -e RABBITMQ_URL -e RABBITMQ_EXCHANGE -e RABBITMQ_QUEUE_NAME --rm -v $(pwd):/fyle-pg-recvlogical --entrypoint=/bin/bash fyle-pg-recvlogical
+docker run -it -e PGHOST -e PGPORT -e PGDATABASE -e PGUSER -e PGPASSWORD -e PGSLOT -e PGTABLES -e RABBITMQ_URL -e RABBITMQ_EXCHANGE -e RABBITMQ_QUEUE_NAME --rm -v $(pwd):/fyle-pg-recvlogical --entrypoint=/bin/bash fyle-pg-recvlogical
 ```
 
 Now make changes to the python files. Then run the command from shell:
