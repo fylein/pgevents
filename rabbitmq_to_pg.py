@@ -18,32 +18,48 @@ class PGWriter:
                                         port=pgport,
                                         database=pgdatabase)
         self.__cursor = self.__connection.cursor()
-        self.__insert_statement = f'insert into {pgaudittable} (action, new, old, diff, tablename, id, updated_at) values (%(action)s, %(new)s, %(old)s, %(diff)s, %(tablename)s, %(id)s, %(updated_at)s)'
+        self.__insert_statement = f'insert into {pgaudittable} (action, new, old, diff, tablename, id, updated_at, last_updated_by) values (%(action)s, %(new)s, %(old)s, %(diff)s, %(tablename)s, %(id)s, %(updated_at)s, %(last_updated_by)s)'
 #        self.__insert_statement = f'insert into {pgaudittable} select * from json_populate_recordset(NULL::{pgaudittable}, %s)'
 
-    def __find_value(self, event, colname):
-        cols = event['new']
-        if event['action'] == 'D':
-            cols = event['old']
+    def __cols_to_dict(self, cols):
+        # [{name: , type:, value}] will be refactored to {name: value}
+        if cols is None:
+            return d
+        d = {}
         for c in cols:
-            if c['name'] == colname:
-                return c['value']
+            k = c['name']
+            v = c['value']
+            d[k] = v
+        return d
+
+    def __find_value(self, action, oldd, newd, colname):
+        if action == 'D':
+            if colname in oldd:
+                return oldd[colname]
+        else:
+            if colname in newd:
+                return newd[colname]
         return None
 
     def __call__(self, ch, method, properties, body):
         event = json.loads(body)
-        id = self.__find_value(event, 'id')
-        updated_at = self.__find_value(event, 'updated_at')
+        oldd = self.__cols_to_dict(event['old'])
+        newd = self.__cols_to_dict(event['new'])
+        diffd = self.__cols_to_dict(event['diff'])
+        id = self.__find_value(event['action'], oldd, newd, 'id')
+        updated_at = self.__find_value(event['action'], oldd, newd, 'updated_at')
+        last_updated_by = self.__find_value(event['action'], oldd, newd, 'last_updated_by')
         doc = {
             'action': event['action'],
             'id': id,
             'updated_at': updated_at,
-            'new': Json(event['new']),
-            'old': Json(event['old']),
-            'diff': Json(event['diff']),
-            'tablename': method.routing_key
+            'new': Json(newd),
+            'old': Json(oldd),
+            'diff': Json(diffd),
+            'tablename': method.routing_key,
+            'last_updated_by': Json(last_updated_by)
         }
-        logger.info('inserting doc %s', doc)
+        logger.debug('inserting doc %s', doc)
         self.__cursor.execute(self.__insert_statement, doc)
         self.__connection.commit()
 
