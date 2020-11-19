@@ -79,7 +79,7 @@ def rabbitmq_to_pg(rabbitmq_url, rabbitmq_exchange, binding_keys, queue_name, pg
     init_logging()
     logger.info('trying to open rabbitmq channel')
     rabbitmq_channel = create_rabbitmq_channel(rabbitmq_url=rabbitmq_url, rabbitmq_exchange=rabbitmq_exchange)
-    result = rabbitmq_channel.queue_declare(queue_name, durable=True, exclusive=True, auto_delete=True)
+    result = rabbitmq_channel.queue_declare(queue_name, durable=True, exclusive=False, auto_delete=True)
     queue_name = result.method.queue
     for binding_key in binding_keys.split(','):
         logger.info('binding to exchange %s, queue %s, binding_key %s', rabbitmq_exchange, queue_name, binding_key)
