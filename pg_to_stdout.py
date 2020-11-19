@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 @click.option('--pguser', default=lambda: os.environ.get('PGUSER', None), required=True, help='Postgresql User ($PGUSER)')
 @click.option('--pgpassword', default=lambda: os.environ.get('PGPASSWORD', None), required=True, help='Postgresql Password ($PGPASSWORD)')
 @click.option('--pgslot', default=lambda: os.environ.get('PGSLOT', None), required=True, help='Postgresql Replication Slot Name ($PGSLOT)')
-@click.option('--pgtables', default=None, required=False, help='Restrict to specific tables e.g. public.transactions,public.reports')
+@click.option('--pgtables', default=lambda: os.environ.get('PGTABLES', None), required=False, help='Restrict to specific tables e.g. public.transactions,public.reports')
 def pg_to_stdout(pghost, pgport, pgdatabase, pguser, pgpassword, pgslot, pgtables):
     init_logging()
     db_cur = create_db_cursor(pghost=pghost, pgport=pgport, pgdatabase=pgdatabase, pguser=pguser, pgpassword=pgpassword, pgslot=pgslot, pgtables=pgtables)
