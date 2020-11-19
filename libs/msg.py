@@ -32,8 +32,24 @@ def __msg_to_event(msg):
         event = None
     return event
 
+def __clean_columns(cols):
+    if cols is None:
+        return None
+    for c in cols:
+        if c['type'] == 'jsonb' and c['value'] is not None:
+            c['value'] = json.loads(c['value'].replace('\\"', '"'))
+        if c['type'] == 'location' and c['value'] is not None:
+            c['value'] = c['value'].replace('\\"', '"')
+    return cols
+
+def __clean_event(event):
+    event['old'] = __clean_columns(cols=event['old'])
+    event['new'] = __clean_columns(cols=event['new'])
+    return event
+
 def consume_stream(msg, process_event_fn):
     event = __msg_to_event(msg)
     if event:
+        event = __clean_event(event)
         process_event_fn(event=event)
     msg.cursor.send_feedback(flush_lsn=msg.data_start)
