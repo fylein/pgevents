@@ -2,10 +2,15 @@ import os
 import json
 import logging
 import copy
-import re
 
 logger = logging.getLogger(__name__)
 
+# events as the following structure
+# action
+# new
+# old
+# routing_key
+# pk
 def __msg_to_event(msg):
     logger.debug('got payload %s', msg.payload)
     event = json.loads(msg.payload)
@@ -27,19 +32,8 @@ def __msg_to_event(msg):
         event = None
     return event
 
-def consume_stream(msg, whitelist_regex_c, blacklist_regex_c, process_event_fn):
+def consume_stream(msg, process_event_fn):
     event = __msg_to_event(msg)
-    allowed = (event is not None)
-    if allowed and whitelist_regex_c:
-        if not re.match(whitelist_regex_c, event['routing_key']):
-            logger.debug('did not pass whitelist %s', event['routing_key'])
-            allowed = False
-    if allowed and blacklist_regex_c:
-        if re.match(blacklist_regex_c, event['routing_key']):
-            logger.debug('matched blacklist %s', event['routing_key'])
-            allowed = False
-    if allowed:
+    if event:
         process_event_fn(event=event)
-    else:
-        logger.debug('skipping event %s', event)
     msg.cursor.send_feedback(flush_lsn=msg.data_start)

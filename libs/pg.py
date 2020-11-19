@@ -5,7 +5,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-def create_db_cursor(pghost, pgport, pgdatabase, pguser, pgpassword, pgslot):
+def create_db_cursor(pghost, pgport, pgdatabase, pguser, pgpassword, pgslot, pgtables):
     conn = psycopg2.connect(f'host={pghost} port={pgport} dbname={pgdatabase} user={pguser} password={pgpassword}',
                                          connection_factory=LogicalReplicationConnection)
     cur = conn.cursor()
@@ -19,6 +19,9 @@ def create_db_cursor(pghost, pgport, pgdatabase, pguser, pgpassword, pgslot):
         else:
             logger.debug('slot already exists, reusing')
     logger.debug('start replication')
-    cur.start_replication(slot_name=pgslot, options={'format-version': 2, 'include-types': False, 'add-tables': 'public.*'}, decode=True)
+    options = {'format-version': 2, 'include-types': False, 'include-pk': True, 'include-lsn': True}
+    if pgtables and len(pgtables) > 0:
+        options['add-tables'] = pgtables
+    cur.start_replication(slot_name=pgslot, options=options, decode=True)
     logger.debug('started consuming')
     return cur
