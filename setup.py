@@ -15,5 +15,6 @@ setup(
         pg_to_rabbitmq=pg_to_rabbitmq:pg_to_rabbitmq
         pg_to_stdout=pg_to_stdout:pg_to_stdout
         rabbitmq_to_stdout=rabbitmq_to_stdout:rabbitmq_to_stdout
+        rabbitmq_to_pg=rabbitmq_to_pg:rabbitmq_to_pg
     ''',
 )
