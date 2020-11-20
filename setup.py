@@ -12,9 +12,8 @@ setup(
     ],
     entry_points='''
         [console_scripts]
-        pg_to_rabbitmq=pg_to_rabbitmq:pg_to_rabbitmq
-        pg_to_stdout=pg_to_stdout:pg_to_stdout
-        rabbitmq_to_stdout=rabbitmq_to_stdout:rabbitmq_to_stdout
-        rabbitmq_to_pg=rabbitmq_to_pg:rabbitmq_to_pg
+        pgevent_producer=pgevent_producer:pgevent_producer
+        pgevent_consumer_debug=pgevent_consumer_debug:pgevent_consumer_debug
+        pgevent_consumer_audit=pgevent_consumer_audit:pgevent_consumer_audit
     ''',
 )

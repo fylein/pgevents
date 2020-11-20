@@ -1,4 +1,4 @@
-# fyle-pg-recvlogical
+# fyle-pgevents
 
 Utility to generate events from PG using logical replication and push it to Rabbitmq.
 
@@ -7,7 +7,7 @@ Utility to generate events from PG using logical replication and push it to Rabb
 Easiest way is to use docker.
 
 ```
-docker build -t fyle-pg-recvlogical .
+docker build -t fyle-pgevents .
 ```
 
 # Pre-requisites
@@ -35,33 +35,28 @@ export PGTABLES=public.transactions,public.reports
 
 export RABBITMQ_URL=yyy
 export RABBITMQ_EXCHANGE=table_exchange
-export RABBITMQ_QUEUE_NAME=rabbitmq_to_stdout
+export RABBITMQ_QUEUE_NAME=audit
 
 ```
 
 Note that if you're running on Docker on Mac and want to connect to host machine, then set PGHOST to host.docker.internal and not localhost or 127.0.0.1.
 
-To read from PostgreSQL and send output to stdout (use this for debugging)
-
-```
-docker run -i -e PGHOST -e PGPORT -e PGDATABASE -e PGUSER -e PGPASSWORD -e PGSLOT --rm fyle-pg-recvlogical pg_to_stdout
-```
 
 To read from PostgreSQL and send data to rabbitmq
 ```
-docker run -i -e PGHOST -e PGPORT -e PGDATABASE -e PGUSER -e PGPASSWORD -e PGSLOT -e RABBITMQ_URL -e RABBITMQ_EXCHANGE --rm fyle-pg-recvlogical pg_to_rabbitmq
+docker run -i -e PGHOST -e PGPORT -e PGDATABASE -e PGUSER -e PGPASSWORD -e PGSLOT -e RABBITMQ_URL -e RABBITMQ_EXCHANGE --rm fyle-pgevents pgevent_producer
 ```
 
 To read data from rabbitmq exchange and print it to stdout
 ```
-docker run -i -e RABBITMQ_URL -e RABBITMQ_EXCHANGE -e RABBITMQ_QUEUE_NAME --rm fyle-pg-recvlogical rabbitmq_to_stdout
+docker run -i -e RABBITMQ_URL -e RABBITMQ_EXCHANGE -e RABBITMQ_QUEUE_NAME --rm fyle-pgevents pgevent_consumer_debug
 ```
 
 For detailed information, use the help flag
 
 ```
-$ docker run -i -e PGHOST -e PGPORT -e PGDATABASE -e PGUSER -e PGPASSWORD -e PGSLOT --rm fyle-pg-recvlogical pg_to_rabbitmq --help
-Usage: pg_to_rabbitmq [OPTIONS]
+$ docker run -i -e PGHOST -e PGPORT -e PGDATABASE -e PGUSER -e PGPASSWORD -e PGSLOT --rm fyle-pgevents pgevent_producer --help
+Usage: pgevent_producer [OPTIONS]
 
 Options:
   --pghost TEXT             Postgresql Host ($PGHOST)  [required]
@@ -84,12 +79,12 @@ Options:
 Map the volume to the docker container and run the utility from within the container while you're making changes in the editor:
 
 ```
-docker run -it -e PGHOST -e PGPORT -e PGDATABASE -e PGUSER -e PGPASSWORD -e PGSLOT -e PGTABLES -e RABBITMQ_URL -e RABBITMQ_EXCHANGE -e RABBITMQ_QUEUE_NAME --rm -v $(pwd):/fyle-pg-recvlogical --entrypoint=/bin/bash fyle-pg-recvlogical
+docker run -it -e PGHOST -e PGPORT -e PGDATABASE -e PGUSER -e PGPASSWORD -e PGSLOT -e PGTABLES -e RABBITMQ_URL -e RABBITMQ_EXCHANGE -e RABBITMQ_QUEUE_NAME --rm -v $(pwd):/fyle-pgevents --entrypoint=/bin/bash fyle-pgevents
 ```
 
 Now make changes to the python files. Then run the command from shell:
 
 ```
-python pg_to_rabbitmq.py
+python pgevent_producer.py
 ```
 

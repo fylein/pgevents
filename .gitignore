@@ -8,6 +8,7 @@ __pycache__
 # Ignore release stuff
 venv/
 release.sh
+dev.sh
 
 # Ignore build files
 build/

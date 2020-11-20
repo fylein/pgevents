@@ -28,7 +28,7 @@ class EventPrinter:
 @click.option('--queue-name', default=lambda: os.environ.get('RABBITMQ_QUEUE_NAME', ''), required=True, help='RabbitMQ queue name ($RABBITMQ_QUEUE_NAME, "")')
 @click.option('--n', default=1, type=int, required=True, help='Print a line every records')
 @click.option('--verbose', default=False, is_flag=True, required=True, help='Print verbose output')
-def rabbitmq_to_stdout(rabbitmq_url, rabbitmq_exchange, binding_keys, queue_name, n, verbose):
+def pgevent_consumer_debug(rabbitmq_url, rabbitmq_exchange, binding_keys, queue_name, n, verbose):
     init_logging()
     logger.info('trying to open rabbitmq channel')
     rabbitmq_channel = create_rabbitmq_channel(rabbitmq_url=rabbitmq_url, rabbitmq_exchange=rabbitmq_exchange)
@@ -42,4 +42,4 @@ def rabbitmq_to_stdout(rabbitmq_url, rabbitmq_exchange, binding_keys, queue_name
     rabbitmq_channel.start_consuming()
 
 if __name__ == '__main__':
-    rabbitmq_to_stdout()
+    pgevent_consumer_debug()

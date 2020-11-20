@@ -14,11 +14,11 @@ RUN pip install -r /tmp/requirements.txt
 # Copy over code
 #################################################
 
-RUN mkdir -p /fyle-pg-recvlogical
+RUN mkdir -p /fyle-pgevents
 
-WORKDIR /fyle-pg-recvlogical
+WORKDIR /fyle-pgevents
 
-COPY . /fyle-pg-recvlogical/
+COPY . /fyle-pgevents/
 RUN pip install .
 
 ENV PYTHONUNBUFFERED 1

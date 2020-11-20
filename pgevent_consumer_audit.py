@@ -75,7 +75,7 @@ class PGWriter:
 @click.option('--pguser', default=lambda: os.environ.get('PGUSER', None), required=True, help='Postgresql User ($PGUSER)')
 @click.option('--pgpassword', default=lambda: os.environ.get('PGPASSWORD', None), required=True, help='Postgresql Password ($PGPASSWORD)')
 @click.option('--pgaudittable', default=lambda: os.environ.get('PGAUDITTABLE', None), required=True, help='Postgresql Audit Table ($PGAUDITTABLE)')
-def rabbitmq_to_pg(rabbitmq_url, rabbitmq_exchange, binding_keys, queue_name, pghost, pgport, pgdatabase, pguser, pgpassword, pgaudittable):
+def pgevent_consumer_audit(rabbitmq_url, rabbitmq_exchange, binding_keys, queue_name, pghost, pgport, pgdatabase, pguser, pgpassword, pgaudittable):
     init_logging()
     logger.info('trying to open rabbitmq channel')
     rabbitmq_channel = create_rabbitmq_channel(rabbitmq_url=rabbitmq_url, rabbitmq_exchange=rabbitmq_exchange)
@@ -89,4 +89,4 @@ def rabbitmq_to_pg(rabbitmq_url, rabbitmq_exchange, binding_keys, queue_name, pg
     rabbitmq_channel.start_consuming()
 
 if __name__ == '__main__':
-    rabbitmq_to_pg()
+    pgevent_consumer_audit()
