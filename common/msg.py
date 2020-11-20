@@ -37,8 +37,14 @@ def __clean_col_value(col):
     if col['type'] in ['location', 'jsonb']:
         return col['value'].replace('\\"', '"')
 
-    if col['name'] in ['last_updated_by', 'extracted_data', 'custom_attributes', 'activity_details']:
+    if col['name'] in ['extracted_data', 'custom_attributes', 'activity_details']:
         return __clean_jsonb_str(val=col['value'])
+
+    if col['name'] in ['last_updated_by']:
+        res = __clean_jsonb_str(val=col['value'])
+        if isinstance(res, str):
+            return { 'org_user_id': res}
+        return res
 
     return col['value']
 
@@ -56,19 +62,10 @@ def __diff_dict(oldd, newd):
     d = {}
     for nk, nv in newd.items():
         if nk not in oldd and nv is not None:
-            d[k] = nv
+            d[nk] = nv
         if nk in oldd and nv != oldd[nk]:
-            d[k] = nv
+            d[nk] = nv
     return d
-
-def __find_value(action, oldd, newd, colname):
-    if action == 'D':
-        if colname in oldd:
-            return oldd[colname]
-    else:
-        if colname in newd:
-            return newd[colname]
-    return None
 
 def __msg_to_event(pgdatabase, msg):
     logger.debug('got payload %s', msg.payload)

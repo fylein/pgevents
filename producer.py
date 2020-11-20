@@ -29,7 +29,7 @@ def process_event_rabbitmq(rabbitmq_exchange, rabbitmq_channel, event):
 @click.option('--pgtables', default=lambda: os.environ.get('PGTABLES', None), required=False, help='Restrict to specific tables e.g. public.transactions,public.reports')
 @click.option('--rabbitmq-url', default=lambda: os.environ.get('RABBITMQ_URL', None), required=True, help='RabbitMQ url ($RABBITMQ_URL)')
 @click.option('--rabbitmq-exchange', default=lambda: os.environ.get('RABBITMQ_EXCHANGE', None), required=True, help='RabbitMQ exchange ($RABBITMQ_EXCHANGE)')
-def pgevent_producer(pghost, pgport, pgdatabase, pguser, pgpassword, pgslot, pgtables, rabbitmq_url, rabbitmq_exchange):
+def producer(pghost, pgport, pgdatabase, pguser, pgpassword, pgslot, pgtables, rabbitmq_url, rabbitmq_exchange):
     init_logging()
     db_cur = create_db_cursor(pghost=pghost, pgport=pgport, pgdatabase=pgdatabase, pguser=pguser, pgpassword=pgpassword, pgslot=pgslot, pgtables=pgtables)
     rabbitmq_channel = create_rabbitmq_channel(rabbitmq_url=rabbitmq_url, rabbitmq_exchange=rabbitmq_exchange)
@@ -37,4 +37,4 @@ def pgevent_producer(pghost, pgport, pgdatabase, pguser, pgpassword, pgslot, pgt
     db_cur.consume_stream(consume=lambda msg : consume_stream(pgdatabase=pgdatabase, msg=msg, process_event_fn=rabbitmq_sender_fn))
 
 if __name__ == '__main__':
-    pgevent_producer()
+    producer()

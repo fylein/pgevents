@@ -44,19 +44,19 @@ Note that if you're running on Docker on Mac and want to connect to host machine
 
 To read from PostgreSQL and send data to rabbitmq
 ```
-docker run -i -e PGHOST -e PGPORT -e PGDATABASE -e PGUSER -e PGPASSWORD -e PGSLOT -e RABBITMQ_URL -e RABBITMQ_EXCHANGE --rm fyle_pgevents pgevent_producer
+docker run -i -e PGHOST -e PGPORT -e PGDATABASE -e PGUSER -e PGPASSWORD -e PGSLOT -e RABBITMQ_URL -e RABBITMQ_EXCHANGE --rm fyle_pgevents producer
 ```
 
 To read data from rabbitmq exchange and print it to stdout
 ```
-docker run -i -e RABBITMQ_URL -e RABBITMQ_EXCHANGE -e RABBITMQ_QUEUE_NAME --rm fyle_pgevents pgevent_consumer_debug
+docker run -i -e RABBITMQ_URL -e RABBITMQ_EXCHANGE -e RABBITMQ_QUEUE_NAME --rm fyle_pgevents consumer_debug
 ```
 
 For detailed information, use the help flag
 
 ```
-$ docker run -i -e PGHOST -e PGPORT -e PGDATABASE -e PGUSER -e PGPASSWORD -e PGSLOT --rm fyle_pgevents pgevent_producer --help
-Usage: pgevent_producer [OPTIONS]
+$ docker run -i -e PGHOST -e PGPORT -e PGDATABASE -e PGUSER -e PGPASSWORD -e PGSLOT --rm fyle_pgevents producer --help
+Usage: producer [OPTIONS]
 
 Options:
   --pghost TEXT             Postgresql Host ($PGHOST)  [required]
@@ -85,6 +85,6 @@ docker run -it -e PGHOST -e PGPORT -e PGDATABASE -e PGUSER -e PGPASSWORD -e PGSL
 Now make changes to the python files. Then run the command from shell:
 
 ```
-python pgevent_producer.py
+python producer.py
 ```
 

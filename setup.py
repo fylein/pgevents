@@ -12,8 +12,8 @@ setup(
     ],
     entry_points='''
         [console_scripts]
-        pgevent_producer=pgevent_producer:pgevent_producer
-        pgevent_consumer_debug=pgevent_consumer_debug:pgevent_consumer_debug
-        pgevent_consumer_audit=pgevent_consumer_audit:pgevent_consumer_audit
+        producer=producer:producer
+        consumer_debug=consumer_debug:consumer_debug
+        consumer_audit=consumer_audit:consumer_audit
     ''',
 )

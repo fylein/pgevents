@@ -22,6 +22,7 @@ def create_db_cursor(pghost, pgport, pgdatabase, pguser, pgpassword, pgslot, pgt
     options = {'format-version': 2, 'include-types': True, 'include-lsn': True}
     if pgtables and len(pgtables) > 0:
         options['add-tables'] = pgtables
+    logger.debug('options for slot %s', options)
     cur.start_replication(slot_name=pgslot, options=options, decode=True)
     logger.debug('started consuming')
     return cur

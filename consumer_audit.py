@@ -18,46 +18,19 @@ class PGWriter:
                                         port=pgport,
                                         database=pgdatabase)
         self.__cursor = self.__connection.cursor()
-        self.__insert_statement = f'insert into {pgaudittable} (action, new, old, diff, tablename, id, updated_at, last_updated_by) values (%(action)s, %(new)s, %(old)s, %(diff)s, %(tablename)s, %(id)s, %(updated_at)s, %(last_updated_by)s)'
-#        self.__insert_statement = f'insert into {pgaudittable} select * from json_populate_recordset(NULL::{pgaudittable}, %s)'
-
-    def __cols_to_dict(self, cols):
-        # [{name: , type:, value}] will be refactored to {name: value}
-        if cols is None:
-            return d
-        d = {}
-        for c in cols:
-            k = c['name']
-            v = c['value']
-            d[k] = v
-        return d
-
-    def __find_value(self, action, oldd, newd, colname):
-        if action == 'D':
-            if colname in oldd:
-                return oldd[colname]
-        else:
-            if colname in newd:
-                return newd[colname]
-        return None
+        self.__insert_statement = f'insert into {pgaudittable} (action, new, old, diff, tablename, id, updated_at, updated_by) values (%(action)s, %(new)s, %(old)s, %(diff)s, %(tablename)s, %(id)s, %(updated_at)s, %(updated_by)s)'
 
     def __call__(self, ch, method, properties, body):
         event = json.loads(body)
-        oldd = self.__cols_to_dict(event['old'])
-        newd = self.__cols_to_dict(event['new'])
-        diffd = self.__cols_to_dict(event['diff'])
-        id = self.__find_value(event['action'], oldd, newd, 'id')
-        updated_at = self.__find_value(event['action'], oldd, newd, 'updated_at')
-        last_updated_by = self.__find_value(event['action'], oldd, newd, 'last_updated_by')
         doc = {
             'action': event['action'],
             'id': id,
-            'updated_at': updated_at,
-            'new': Json(newd),
-            'old': Json(oldd),
-            'diff': Json(diffd),
-            'tablename': method.routing_key,
-            'last_updated_by': Json(last_updated_by)
+            'updated_at': event['updated_at'],
+            'new': Json(event['new']),
+            'old': Json(event['old']),
+            'diff': Json(event['diff']),
+            'tablename': event['tablename'],
+            'updated_by': Json(event['updated_by'])
         }
         logger.debug('inserting doc %s', doc)
         self.__cursor.execute(self.__insert_statement, doc)
@@ -75,7 +48,7 @@ class PGWriter:
 @click.option('--pguser', default=lambda: os.environ.get('PGUSER', None), required=True, help='Postgresql User ($PGUSER)')
 @click.option('--pgpassword', default=lambda: os.environ.get('PGPASSWORD', None), required=True, help='Postgresql Password ($PGPASSWORD)')
 @click.option('--pgaudittable', default=lambda: os.environ.get('PGAUDITTABLE', None), required=True, help='Postgresql Audit Table ($PGAUDITTABLE)')
-def pgevent_consumer_audit(rabbitmq_url, rabbitmq_exchange, binding_keys, queue_name, pghost, pgport, pgdatabase, pguser, pgpassword, pgaudittable):
+def consumer_audit(rabbitmq_url, rabbitmq_exchange, binding_keys, queue_name, pghost, pgport, pgdatabase, pguser, pgpassword, pgaudittable):
     init_logging()
     logger.info('trying to open rabbitmq channel')
     rabbitmq_channel = create_rabbitmq_channel(rabbitmq_url=rabbitmq_url, rabbitmq_exchange=rabbitmq_exchange)
@@ -89,4 +62,4 @@ def pgevent_consumer_audit(rabbitmq_url, rabbitmq_exchange, binding_keys, queue_
     rabbitmq_channel.start_consuming()
 
 if __name__ == '__main__':
-    pgevent_consumer_audit()
+    consumer_audit()
