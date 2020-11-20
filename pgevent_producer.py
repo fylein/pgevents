@@ -6,15 +6,15 @@ from psycopg2.extras import LogicalReplicationConnection
 import pika
 import click
 import logging
-from libs.msg import consume_stream
-from libs.pg import create_db_cursor
-from libs.rabbitmq import create_rabbitmq_channel
-from libs.logging import init_logging
+from common.msg import consume_stream
+from common.pg import create_db_cursor
+from common.rabbitmq import create_rabbitmq_channel
+from common.logging import init_logging
 
 logger = logging.getLogger(__name__)
 
 def process_event_rabbitmq(rabbitmq_exchange, rabbitmq_channel, event):
-    routing_key = event['routing_key']
+    routing_key = event['tablename']
     body = json.dumps(event, sort_keys=True, default=str)
     logger.debug('sending routing_key %s body %s ', routing_key, body)
     rabbitmq_channel.basic_publish(exchange=rabbitmq_exchange, routing_key=routing_key, body=body)
@@ -34,7 +34,7 @@ def pgevent_producer(pghost, pgport, pgdatabase, pguser, pgpassword, pgslot, pgt
     db_cur = create_db_cursor(pghost=pghost, pgport=pgport, pgdatabase=pgdatabase, pguser=pguser, pgpassword=pgpassword, pgslot=pgslot, pgtables=pgtables)
     rabbitmq_channel = create_rabbitmq_channel(rabbitmq_url=rabbitmq_url, rabbitmq_exchange=rabbitmq_exchange)
     rabbitmq_sender_fn = lambda event: process_event_rabbitmq(rabbitmq_exchange=rabbitmq_exchange, rabbitmq_channel=rabbitmq_channel, event=event)
-    db_cur.consume_stream(consume=lambda msg : consume_stream(msg=msg, process_event_fn=rabbitmq_sender_fn))
+    db_cur.consume_stream(consume=lambda msg : consume_stream(pgdatabase=pgdatabase, msg=msg, process_event_fn=rabbitmq_sender_fn))
 
 if __name__ == '__main__':
     pgevent_producer()

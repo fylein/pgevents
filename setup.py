@@ -4,7 +4,7 @@ from setuptools import setup
 setup(
     name="pg_recvlogical",
     version='0.1',
-    packages=['', 'libs'],
+    packages=['', 'common'],
     install_requires=[
         'pika==1.1.0',
         'psycopg2==2.8.6',

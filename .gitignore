@@ -9,6 +9,7 @@ __pycache__
 venv/
 release.sh
 dev.sh
+dev.sql
 
 # Ignore build files
 build/

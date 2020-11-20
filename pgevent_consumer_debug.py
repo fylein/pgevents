@@ -2,8 +2,8 @@ import os
 import click
 import logging
 import json
-from libs.rabbitmq import create_rabbitmq_channel
-from libs.logging import init_logging
+from common.rabbitmq import create_rabbitmq_channel
+from common.logging import init_logging
 
 logger = logging.getLogger(__name__)
 
