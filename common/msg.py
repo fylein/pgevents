@@ -54,8 +54,10 @@ def __clean_columns(cols):
         return d
     for col in cols:
         k = col['name']
-        v = __clean_col_value(col=col)
-        d[k] = v
+        # hack to ignore text_column1 etc columns - it is going to go away soon
+        if '_column' not in k:
+            v = __clean_col_value(col=col)
+            d[k] = v
     return d
 
 def __diff_dict(oldd, newd):
@@ -95,10 +97,10 @@ def __msg_to_event(pgdatabase, msg):
     elif event['action'] == 'U':
         event['new'] = __clean_columns(pl['columns'])
         event['old'] = __clean_columns(pl['identity'])
-        event['diff'] = __diff_dict(event['old'], event['new'])
         event['id'] = event['new'].pop('id', None)
         event['updated_at'] = event['new'].pop('updated_at', None)
         event['updated_by'] = event['new'].pop('last_updated_by', None)
+        event['diff'] = __diff_dict(event['old'], event['new'])
     elif event['action'] == 'D':
         event['old'] = __clean_columns(pl['identity'])
         event['id'] = event['old'].pop('id', None)

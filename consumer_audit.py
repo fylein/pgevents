@@ -22,9 +22,10 @@ class PGWriter:
 
     def __call__(self, ch, method, properties, body):
         event = json.loads(body)
+        logger.debug('got event %s', event)
         doc = {
             'action': event['action'],
-            'id': id,
+            'id': event['id'],
             'updated_at': event['updated_at'],
             'new': Json(event['new']),
             'old': Json(event['old']),

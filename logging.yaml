@@ -6,7 +6,6 @@ formatters:
 handlers:
   default:
     class: logging.StreamHandler
-    level: DEBUG
     formatter: simple
     stream: ext://sys.stdout
 loggers:
@@ -14,6 +13,6 @@ loggers:
     level: ERROR
     propagate: True
 root:
-  level: DEBUG
+  level: INFO
   handlers: [default]
   propagate: True
