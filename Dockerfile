@@ -14,11 +14,11 @@ RUN pip install -r /tmp/requirements.txt
 # Copy over code
 #################################################
 
-RUN mkdir -p /fyle-pgevents
+RUN mkdir -p /fyle_pgevents
 
-WORKDIR /fyle-pgevents
+WORKDIR /fyle_pgevents
 
-COPY . /fyle-pgevents/
+COPY . /fyle_pgevents/
 RUN pip install .
 
 ENV PYTHONUNBUFFERED 1
