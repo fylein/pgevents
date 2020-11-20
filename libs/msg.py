@@ -73,8 +73,6 @@ def __clean_column(col):
     return col
 
 def __clean_columns(cols):
-    if cols is None:
-        return None
     res = []
     for col in cols:
         col = __clean_column(col=col)
@@ -82,8 +80,6 @@ def __clean_columns(cols):
     return res
 
 def __diff(oldc, newc):
-    if oldc is None or newc is None:
-        return None
     d = []
     for col in newc:
         if col not in oldc and col['value'] is not None:
@@ -91,6 +87,10 @@ def __diff(oldc, newc):
     return d
 
 def __clean_event(event):
+    if 'old' not in event:
+        event['old'] = []
+    if 'new' not in event:
+        event['new'] = []
     event['old'] = __clean_columns(cols=event['old'])
     event['new'] = __clean_columns(cols=event['new'])
     event['diff'] = __diff(event['old'], event['new'])
