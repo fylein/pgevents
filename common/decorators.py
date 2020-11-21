@@ -22,30 +22,13 @@ def retry(n, backoff, exceptions):
             while attempt < n:
                 try:
                     return func(*args, **kwargs)
-                except exceptions as e:
+                except exceptions:
                     logger.exception(
                         'Exception thrown when attempting to run %s, attempt '
-                        '%d of %d, retrying after %s seconds' % (func, attempt, n, backoff)
+                        '%d of %d, retrying after %s seconds', func, attempt, n, backoff
                     )
                     time.sleep(backoff)
                     attempt += 1
             raise RetryException('failed to execute %s despite retrying' % (func))
-        return newfn
-    return decorator
-
-def swallow(exceptions):
-    """
-    Swallow Decorator
-    If a specific function hits these exceptions, then just swallow it up. Doesn't matter
-    :param exceptions: Lists of exceptions that are okay
-    """
-    def decorator(func):
-        def newfn(*args, **kwargs):
-            try:
-                return func(*args, **kwargs)
-            except exceptions as e:
-                logger.warn(
-                    'swallowed exception %s while executing %s', e, func
-                )
         return newfn
     return decorator

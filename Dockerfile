@@ -19,6 +19,9 @@ RUN mkdir -p /fyle_pgevents
 WORKDIR /fyle_pgevents
 
 COPY . /fyle_pgevents/
+
+RUN pylint --rcfile=.pylintrc common *.py
+
 RUN pip install .
 
 ENV PYTHONUNBUFFERED 1

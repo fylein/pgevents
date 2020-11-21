@@ -1,7 +1,5 @@
-import os
 import json
 import logging
-import copy
 
 logger = logging.getLogger(__name__)
 
@@ -31,12 +29,14 @@ def __clean_jsonb_str(val):
         return val
 
 def __clean_col_value(col):
+    #pylint: disable=too-many-return-statements
+
     if col['value'] is None:
         return None
 
     if col['type'] in ['location']:
         return col['value'].replace('\\"', '"')
-    
+
     if col['type'] in ['jsonb']:
         return __clean_jsonb_str(val=col['value'])
 
@@ -46,7 +46,7 @@ def __clean_col_value(col):
     if col['name'] in ['last_updated_by']:
         res = __clean_jsonb_str(val=col['value'])
         if isinstance(res, str):
-            return { 'org_user_id': res}
+            return {'org_user_id': res}
         return res
 
     return col['value']
@@ -120,4 +120,3 @@ def msg_to_event(pgdatabase, msg):
         event['updated_by'] = event['old'].pop('last_updated_by', None)
 
     return event
-

@@ -1,12 +1,9 @@
 import json
 import logging
-import os
-import time
 
 import pika
 
 from common.decorators import retry
-from common.logging import init_logging
 from common.compression import decompress
 
 logger = logging.getLogger(__name__)
@@ -43,6 +40,7 @@ class PGEventConsumer:
             raise PGEventConsumerShutdownException('shutting down')
 
     def __process_body(self, ch, method, properties, body):
+        #pylint: disable=unused-argument
         self.__check_shutdown()
         bodyu = decompress(body)
         event = json.loads(bodyu)
@@ -52,10 +50,11 @@ class PGEventConsumer:
         try:
             self.__rmq_channel.basic_consume(queue=self.__queue_name, on_message_callback=self.__process_body, auto_ack=True)
             self.__rmq_channel.start_consuming()
-        except PGEventConsumerShutdownException as e:
+        except PGEventConsumerShutdownException:
             logger.warning('exiting process loop')
             return
 
     def shutdown(self, *args):
+        #pylint: disable=unused-argument
         logger.warning('Shutdown has been requested')
         self.__shutdown = True

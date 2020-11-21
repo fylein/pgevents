@@ -1,8 +1,6 @@
-import json
 import logging
 import os
 import signal
-import time
 
 import click
 import psycopg2
@@ -28,10 +26,10 @@ class ConsumerAuditEventProcessor:
         self.__insert_statement = f'insert into {pgaudittable} (action, new, old, diff, tablename, id, updated_at, updated_by) values (%(action)s, %(new)s, %(old)s, %(diff)s, %(tablename)s, %(id)s, %(updated_at)s, %(updated_by)s)'
         self.__connect_db()
 
-    @retry(n=3, backoff=15, exceptions=(psycopg2.errors.ObjectInUse, psycopg2.InterfaceError))
+    @retry(n=3, backoff=15, exceptions=(psycopg2.OperationalError, psycopg2.InterfaceError))
     def __connect_db(self):
-        self.__db_conn = psycopg2.connect(host=self.__pghost, port=self.__pgport, dbname=self.__pgdatabase, user=self.__pguser, 
-                                password=self.__pgpassword)
+        self.__db_conn = psycopg2.connect(host=self.__pghost, port=self.__pgport, dbname=self.__pgdatabase, user=self.__pguser,
+                                          password=self.__pgpassword)
         self.__db_cur = self.__db_conn.cursor()
 
     def __call__(self, event):

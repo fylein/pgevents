@@ -21,8 +21,8 @@ logger = logging.getLogger(__name__)
 @click.option('--rabbitmq-exchange', default=lambda: os.environ.get('RABBITMQ_EXCHANGE', None), required=True, help='RabbitMQ exchange ($RABBITMQ_EXCHANGE)')
 def producer(pghost, pgport, pgdatabase, pguser, pgpassword, pgslot, pgtables, rabbitmq_url, rabbitmq_exchange):
     init_logging()
-    p = PGEventProducer(pghost=pghost, pgport=pgport, pgdatabase=pgdatabase, pguser=pguser, pgpassword=pgpassword, 
-            pgslot=pgslot, pgtables=pgtables, rabbitmq_url=rabbitmq_url, rabbitmq_exchange=rabbitmq_exchange)
+    p = PGEventProducer(pghost=pghost, pgport=pgport, pgdatabase=pgdatabase, pguser=pguser, pgpassword=pgpassword,
+                        pgslot=pgslot, pgtables=pgtables, rabbitmq_url=rabbitmq_url, rabbitmq_exchange=rabbitmq_exchange)
     signal.signal(signal.SIGTERM, p.shutdown)
     signal.signal(signal.SIGINT, p.shutdown)
     p.process()
