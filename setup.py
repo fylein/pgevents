@@ -8,7 +8,8 @@ setup(
     install_requires=[
         'pika==1.1.0',
         'psycopg2==2.8.6',
-        'click==7.0'
+        'click==7.0',
+        'brotli==1.0.9'
     ],
     entry_points='''
         [console_scripts]

@@ -32,3 +32,20 @@ def retry(n, backoff, exceptions):
             raise RetryException('failed to execute %s despite retrying' % (func))
         return newfn
     return decorator
+
+def swallow(exceptions):
+    """
+    Swallow Decorator
+    If a specific function hits these exceptions, then just swallow it up. Doesn't matter
+    :param exceptions: Lists of exceptions that are okay
+    """
+    def decorator(func):
+        def newfn(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except exceptions as e:
+                logger.warn(
+                    'swallowed exception %s while executing %s', e, func
+                )
+        return newfn
+    return decorator

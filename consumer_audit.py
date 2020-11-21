@@ -1,38 +1,32 @@
 import json
 import logging
 import os
+import signal
 import time
 
 import click
-import pika
 import psycopg2
 from psycopg2.extras import Json
 
 from common.decorators import retry
 from common.logging import init_logging
+from common.pgevent_consumer import PGEventConsumer
 
 logger = logging.getLogger(__name__)
 
-# create table audit_tmp (action varchar(2), new jsonb, old jsonb, diff jsonb, tablename text, id text)
-class Consumer:
-    def __init__(self, pghost, pgport, pgdatabase, pguser, pgpassword, pgaudittable, rabbitmq_url, 
-                rabbitmq_exchange, queue_name, binding_keys):
+class ConsumerAuditEventProcessor:
+    def __init__(self, pghost, pgport, pgdatabase, pguser, pgpassword, pgaudittable):
         self.__pghost = pghost
         self.__pgport = pgport
         self.__pgdatabase = pgdatabase
         self.__pguser = pguser
         self.__pgpassword = pgpassword
         self.__pgaudittable = pgaudittable
-        self.__rabbitmq_url = rabbitmq_url
-        self.__rabbitmq_exchange = rabbitmq_exchange
-        self.__queue_name = queue_name
-        self.__binding_keys = binding_keys
         self.__db_conn = None
         self.__db_cur = None
-        self.__rmq_conn = None
-        self.__rmq_channel = None
+        self.__shutdown = False
         self.__insert_statement = f'insert into {pgaudittable} (action, new, old, diff, tablename, id, updated_at, updated_by) values (%(action)s, %(new)s, %(old)s, %(diff)s, %(tablename)s, %(id)s, %(updated_at)s, %(updated_by)s)'
-
+        self.__connect_db()
 
     @retry(n=3, backoff=15, exceptions=(psycopg2.errors.ObjectInUse, psycopg2.InterfaceError))
     def __connect_db(self):
@@ -40,22 +34,7 @@ class Consumer:
                                 password=self.__pgpassword)
         self.__db_cur = self.__db_conn.cursor()
 
-
-    @retry(n=3, backoff=15, exceptions=(pika.exceptions.StreamLostError, pika.exceptions.AMQPConnectionError))
-    def __connect_rabbitmq(self):
-        self.__rmq_conn = pika.BlockingConnection(pika.URLParameters(self.__rabbitmq_url))
-        self.__rmq_channel = self.__rmq_conn.channel()
-        self.__rmq_channel.exchange_declare(exchange=self.__rabbitmq_exchange, exchange_type='topic')
-# TODO: check these parameters - they might not be correct
-        res = self.__rmq_channel.queue_declare(self.__queue_name, durable=True, exclusive=False, auto_delete=True)
-
-        self.__queue_name = res.method.queue
-        for binding_key in self.__binding_keys.split(','):
-            logger.info('binding to exchange %s, queue %s, binding_key %s', self.__rabbitmq_exchange, self.__queue_name, binding_key)
-            self.__rmq_channel.queue_bind(exchange=self.__rabbitmq_exchange, queue=self.__queue_name, routing_key=binding_key)
-
-    def __process_body(self, ch, method, properties, body):
-        event = json.loads(body)
+    def __call__(self, event):
         logger.debug('got event %s', event)
         doc = {
             'action': event['action'],
@@ -71,18 +50,6 @@ class Consumer:
         self.__db_cur.execute(self.__insert_statement, doc)
         self.__db_conn.commit()
 
-    def process(self):
-        while True:
-            self.__connect_rabbitmq()
-            self.__connect_db()
-            logger.info('connected to rabbitmq and audit db successfully')
-            try:
-                self.__rmq_channel.basic_consume(queue=self.__queue_name, on_message_callback=self.__process_body, auto_ack=True)
-                self.__rmq_channel.start_consuming()
-            except (psycopg2.errors.ObjectInUse, psycopg2.InterfaceError, pika.exceptions.StreamLostError, pika.exceptions.AMQPConnectionError) as e:
-                logger.exception('hit unexpected exception while processing, will backoff and reconnect...')
-                time.sleep(15)
-
 @click.command()
 @click.option('--rabbitmq-url', default=lambda: os.environ.get('RABBITMQ_URL', None), required=True, help='RabbitMQ url ($RABBITMQ_URL)')
 @click.option('--rabbitmq-exchange', default=lambda: os.environ.get('RABBITMQ_EXCHANGE', None), required=True, help='RabbitMQ exchange ($RABBITMQ_EXCHANGE)')
@@ -96,9 +63,11 @@ class Consumer:
 @click.option('--pgaudittable', default=lambda: os.environ.get('PGAUDITTABLE', None), required=True, help='Postgresql Audit Table ($PGAUDITTABLE)')
 def consumer_audit(rabbitmq_url, rabbitmq_exchange, binding_keys, queue_name, pghost, pgport, pgdatabase, pguser, pgpassword, pgaudittable):
     init_logging()
-    c = Consumer(pghost=pghost, pgport=pgport, pgdatabase=pgdatabase, pguser=pguser, pgpassword=pgpassword, pgaudittable=pgaudittable, 
-            rabbitmq_url=rabbitmq_url, rabbitmq_exchange=rabbitmq_exchange, binding_keys=binding_keys, queue_name=queue_name)
-    c.process()
+    process_event_fn = ConsumerAuditEventProcessor(pghost=pghost, pgport=pgport, pgdatabase=pgdatabase, pguser=pguser, pgpassword=pgpassword, pgaudittable=pgaudittable)
+    pgevent_consumer = PGEventConsumer(rabbitmq_url=rabbitmq_url, rabbitmq_exchange=rabbitmq_exchange, queue_name=queue_name, binding_keys=binding_keys, process_event_fn=process_event_fn)
+    signal.signal(signal.SIGTERM, pgevent_consumer.shutdown)
+    signal.signal(signal.SIGINT, pgevent_consumer.shutdown)
+    pgevent_consumer.process()
 
 if __name__ == '__main__':
     consumer_audit()
