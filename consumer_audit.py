@@ -1,12 +1,14 @@
 import json
 import logging
 import os
+import time
 
 import click
 import pika
 import psycopg2
 from psycopg2.extras import Json
 
+from common.decorators import retry
 from common.logging import init_logging
 
 logger = logging.getLogger(__name__)
@@ -45,7 +47,7 @@ class Consumer:
         self.__rmq_channel = self.__rmq_conn.channel()
         self.__rmq_channel.exchange_declare(exchange=self.__rabbitmq_exchange, exchange_type='topic')
 # TODO: check these parameters - they might not be correct
-        res = __rmq_channel.queue_declare(self.__queue_name, durable=True, exclusive=False, auto_delete=True)
+        res = self.__rmq_channel.queue_declare(self.__queue_name, durable=True, exclusive=False, auto_delete=True)
 
         self.__queue_name = res.method.queue
         for binding_key in self.__binding_keys.split(','):
@@ -70,19 +72,16 @@ class Consumer:
         self.__db_conn.commit()
 
     def process(self):
-        self.__connect_rabbitmq()
-        self.__connect_db()
-        logger.info('connected to rabbitmq and audit db successfully')
         while True:
+            self.__connect_rabbitmq()
+            self.__connect_db()
+            logger.info('connected to rabbitmq and audit db successfully')
             try:
-                self.__rabbitmq_channel.basic_consume(queue=self.__queue_name, on_message_callback=self.__process_body, auto_ack=True)
-                self.__rabbitmq_channel.start_consuming()
-            except (psycopg2.InterfaceError) as e:
-                logger.exception('hit unexpected exception while processing, will backoff and reconnect...', e)
-                self.__connect_db()
-            except (pika.exceptions.StreamLostError, pika.exceptions.AMQPConnectionError) as e:
-                logger.exception('hit unexpected exception while processing, will backoff and reconnect...', e)
-                self.__connect_rabbitmq()
+                self.__rmq_channel.basic_consume(queue=self.__queue_name, on_message_callback=self.__process_body, auto_ack=True)
+                self.__rmq_channel.start_consuming()
+            except (psycopg2.errors.ObjectInUse, psycopg2.InterfaceError, pika.exceptions.StreamLostError, pika.exceptions.AMQPConnectionError) as e:
+                logger.exception('hit unexpected exception while processing, will backoff and reconnect...')
+                time.sleep(15)
 
 @click.command()
 @click.option('--rabbitmq-url', default=lambda: os.environ.get('RABBITMQ_URL', None), required=True, help='RabbitMQ url ($RABBITMQ_URL)')

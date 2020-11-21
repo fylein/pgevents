@@ -93,20 +93,16 @@ class Producer:
         msg.cursor.send_feedback(flush_lsn=msg.data_start)
 
     def process(self):
-        self.__connect_db()
-        self.__connect_rabbitmq()
-        logger.info('connected to db and rabbitmq successfully')
 
         while True:
+            self.__connect_db()
+            self.__connect_rabbitmq()
+            logger.info('connected to db and rabbitmq successfully')
             try:
                 self.__db_cur.consume_stream(self.__consume_stream)
-            except (psycopg2.errors.ObjectInUse, psycopg2.InterfaceError) as e:
-                logger.exception('hit unexpected exception while processing, will backoff and reconnect...', e)
-                self.__connect_db()
-
-            except (pika.exceptions.StreamLostError, pika.exceptions.AMQPConnectionError) as e:
-                logger.exception('hit unexpected exception while processing, will backoff and reconnect...', e)
-                self.__connect_rabbitmq()
+            except (psycopg2.errors.ObjectInUse, psycopg2.InterfaceError, pika.exceptions.StreamLostError, pika.exceptions.AMQPConnectionError) as e:
+                logger.exception('hit unexpected exception while processing, will backoff and reconnect...')
+                time.sleep(15)
 
 @click.command()
 @click.option('--pghost', default=lambda: os.environ.get('PGHOST', None), required=True, help='Postgresql Host ($PGHOST)')

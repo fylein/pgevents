@@ -29,6 +29,6 @@ def retry(n, backoff, exceptions):
                     )
                     time.sleep(backoff)
                     attempt += 1
-            raise RetryException('failed to execute %s despite retrying')
+            raise RetryException('failed to execute %s despite retrying' % (func))
         return newfn
     return decorator
