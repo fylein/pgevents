@@ -1,11 +1,19 @@
-import os
-import click
-import logging
 import json
-from common.rabbitmq import create_rabbitmq_channel
+import logging
+import os
+
+import click
+import pika
+
 from common.logging import init_logging
 
 logger = logging.getLogger(__name__)
+
+def create_rabbitmq_channel(rabbitmq_url, rabbitmq_exchange):
+    conn = pika.BlockingConnection(pika.URLParameters(rabbitmq_url))
+    channel = conn.channel()
+    channel.exchange_declare(exchange=rabbitmq_exchange, exchange_type='topic')
+    return channel
 
 class EventPrinter:
     def __init__(self, n=100, verbose=False):

@@ -1,13 +1,21 @@
-import os
-import click
-import logging
 import json
-from common.rabbitmq import create_rabbitmq_channel
-from common.logging import init_logging
+import logging
+import os
+
+import click
+import pika
 import psycopg2
 from psycopg2.extras import Json
 
+from common.logging import init_logging
+
 logger = logging.getLogger(__name__)
+
+def create_rabbitmq_channel(rabbitmq_url, rabbitmq_exchange):
+    conn = pika.BlockingConnection(pika.URLParameters(rabbitmq_url))
+    channel = conn.channel()
+    channel.exchange_declare(exchange=rabbitmq_exchange, exchange_type='topic')
+    return channel
 
 # create table audit_tmp (action varchar(2), new jsonb, old jsonb, diff jsonb, tablename text, id text)
 class PGWriter:
