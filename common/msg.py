@@ -81,11 +81,11 @@ def __diff_dict(oldd, newd):
             d[nk] = nv
     return d
 
-def __msg_to_event(pgdatabase, msg):
-    logger.debug('got payload %s', msg.payload)
+def msg_to_event(pgdatabase, msg):
     pl = json.loads(msg.payload)
     if pl['action'] not in ['I', 'U', 'D']:
         return None
+    logger.debug('got payload %s', msg.payload)
 
     event = {
         'tablename': None,
@@ -121,8 +121,3 @@ def __msg_to_event(pgdatabase, msg):
 
     return event
 
-def consume_stream(pgdatabase, msg, process_event_fn):
-    event = __msg_to_event(pgdatabase, msg)
-    if event:
-        process_event_fn(event=event)
-    msg.cursor.send_feedback(flush_lsn=msg.data_start)
