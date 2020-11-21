@@ -13,6 +13,7 @@ from psycopg2.extras import LogicalReplicationConnection
 
 from common.logging import init_logging
 from common.msg import msg_to_event
+from common.decorators import retry
 
 logger = logging.getLogger(__name__)
 
@@ -28,12 +29,12 @@ class Producer:
         self.__pgtables = pgtables
         self.__rabbitmq_url = rabbitmq_url
         self.__rabbitmq_exchange = rabbitmq_exchange
-        self.__error_backoff_secs = 15
         self.__db_conn = None
         self.__db_cur = None
         self.__rmq_conn = None
         self.__rmq_channel = None
 
+    @retry(n=3, backoff=15, exceptions=(psycopg2.errors.ObjectInUse, psycopg2.InterfaceError))
     def __connect_db(self):
         self.__db_conn = psycopg2.connect(host=self.__pghost, port=self.__pgport, dbname=self.__pgdatabase, user=self.__pguser, 
                                 password=self.__pgpassword, connection_factory=LogicalReplicationConnection)
@@ -46,8 +47,9 @@ class Producer:
         if self.__db_conn:
             self.__db_conn.close()
 
+    @retry(n=3, backoff=15, exceptions=(pika.exceptions.StreamLostError, pika.exceptions.AMQPConnectionError))
     def __connect_rabbitmq(self):
-        self.__rmq_conn = pika.BlockingConnection(pika.URLParameters(self.__rabbitmq_url + '?heartbeat=600'))
+        self.__rmq_conn = pika.BlockingConnection(pika.URLParameters(self.__rabbitmq_url))
         self.__rmq_channel = self.__rmq_conn.channel()
         self.__rmq_channel.exchange_declare(exchange=self.__rabbitmq_exchange, exchange_type='topic')
 
@@ -91,18 +93,20 @@ class Producer:
         msg.cursor.send_feedback(flush_lsn=msg.data_start)
 
     def process(self):
+        self.__connect_db()
+        self.__connect_rabbitmq()
+        logger.info('connected to db and rabbitmq successfully')
+
         while True:
             try:
-                self.__connect_db()
-                self.__connect_rabbitmq()
-                logger.info('connected to db and rabbitmq successfully')
                 self.__db_cur.consume_stream(self.__consume_stream)
-            except (psycopg2.errors.ObjectInUse, psycopg2.InterfaceError, pika.exceptions.StreamLostError, pika.exceptions.AMQPConnectionError) as e:
-                logger.exception('hit unexpected exception while processing, will backoff and reconnect...')
-#            self.__disconnect_db()
-#            self.__disconnect_rabbitmq()
-            logger.debug('backing off for %s seconds', self.__error_backoff_secs)
-            time.sleep(self.__error_backoff_secs)
+            except (psycopg2.errors.ObjectInUse, psycopg2.InterfaceError) as e:
+                logger.exception('hit unexpected exception while processing, will backoff and reconnect...', e)
+                self.__connect_db()
+
+            except (pika.exceptions.StreamLostError, pika.exceptions.AMQPConnectionError) as e:
+                logger.exception('hit unexpected exception while processing, will backoff and reconnect...', e)
+                self.__connect_rabbitmq()
 
 @click.command()
 @click.option('--pghost', default=lambda: os.environ.get('PGHOST', None), required=True, help='Postgresql Host ($PGHOST)')
