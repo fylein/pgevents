@@ -47,7 +47,7 @@ class Producer:
             self.__db_conn.close()
 
     def __connect_rabbitmq(self):
-        self.__rmq_conn = pika.BlockingConnection(pika.URLParameters(self.__rabbitmq_url))
+        self.__rmq_conn = pika.BlockingConnection(pika.URLParameters(self.__rabbitmq_url + '?heartbeat=600'))
         self.__rmq_channel = self.__rmq_conn.channel()
         self.__rmq_channel.exchange_declare(exchange=self.__rabbitmq_exchange, exchange_type='topic')
 
@@ -95,11 +95,12 @@ class Producer:
             try:
                 self.__connect_db()
                 self.__connect_rabbitmq()
+                logger.info('connected to db and rabbitmq successfully')
                 self.__db_cur.consume_stream(self.__consume_stream)
-            except (psycopg2.InterfaceError, pika.exceptions.StreamLostError, pika.exceptions.AMQPConnectionError) as e:
+            except (psycopg2.errors.ObjectInUse, psycopg2.InterfaceError, pika.exceptions.StreamLostError, pika.exceptions.AMQPConnectionError) as e:
                 logger.exception('hit unexpected exception while processing, will backoff and reconnect...')
-            self.__disconnect_db()
-            self.__disconnect_rabbitmq()
+#            self.__disconnect_db()
+#            self.__disconnect_rabbitmq()
             logger.debug('backing off for %s seconds', self.__error_backoff_secs)
             time.sleep(self.__error_backoff_secs)
 
