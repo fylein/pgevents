@@ -59,6 +59,15 @@ def __skip_col(tablename, colname):
             return True
         if '_old' in colname:
             return True
+        if 'custom_attributes' in colname:
+            return True
+
+    if 'public.users' in tablename:
+        if 'password' in colname:
+            return True
+        if 'email' in colname:
+            return True
+
     return False
 
 def __clean_columns(tablename, cols):
