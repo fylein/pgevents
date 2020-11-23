@@ -25,6 +25,7 @@ class PGEventConsumer:
 
     @retry(n=3, backoff=15, exceptions=(pika.exceptions.StreamLostError, pika.exceptions.AMQPConnectionError))
     def __connect_rabbitmq(self):
+        self.__check_shutdown()
         self.__rmq_conn = pika.BlockingConnection(pika.URLParameters(self.__rabbitmq_url))
         self.__rmq_channel = self.__rmq_conn.channel()
         self.__rmq_channel.exchange_declare(exchange=self.__rabbitmq_exchange, exchange_type='topic')

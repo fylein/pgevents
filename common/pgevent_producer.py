@@ -60,9 +60,6 @@ class PGEventProducer:
         routing_key = event['tablename']
         body = json.dumps(event, sort_keys=True, default=str)
         bodyc = compress(body)
-        # bodyd = decompress(bodyc)
-        # assert body == bodyd, 'compression is losing data'
-        # logger.debug('original body size %s, compressed size %s, savings %s', len(body), len(bodyc), len(body) * 1.0 / len(bodyc))
         logger.debug('sending routing_key %s bodyc bytes %s ', routing_key, len(bodyc))
         self.__rmq_channel.basic_publish(exchange=self.__rabbitmq_exchange, routing_key=routing_key, body=bodyc)
 
@@ -82,7 +79,7 @@ class PGEventProducer:
         try:
             self.__connect_db()
             self.__connect_rabbitmq()
-            logger.info('connected to db and rabbitmq successfully')
+            logger.debug('connected to db and rabbitmq successfully')
             self.__db_cur.consume_stream(self.__consume_stream)
         except PGEventProducerShutdownException:
             logger.warning('exiting process loop')

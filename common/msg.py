@@ -112,6 +112,8 @@ def msg_to_event(pgdatabase, msg):
         event['id'] = event['new'].pop('id', None)
         event['updated_at'] = event['new'].pop('updated_at', None)
         event['updated_by'] = event['new'].pop('last_updated_by', None)
+        event['old'].pop('last_updated_by', None)
+        event['old'].pop('updated_at', None)
         event['diff'] = __diff_dict(event['old'], event['new'])
     elif event['action'] == 'D':
         event['old'] = __clean_columns(event['tablename'], pl['identity'])
