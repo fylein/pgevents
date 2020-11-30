@@ -34,6 +34,9 @@ class ConsumerAuditEventProcessor:
 
     def __call__(self, event):
         logger.debug('got event %s', event)
+        if event['action'] == 'U' and not event['diff']:
+            logger.debug('skipping empty update event')
+            return
         doc = {
             'action': event['action'],
             'id': event['id'],
