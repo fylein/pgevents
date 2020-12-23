@@ -61,7 +61,7 @@ class PGEventProducer:
         body = json.dumps(event, sort_keys=True, default=str)
         bodyc = compress(body)
         logger.debug('sending routing_key %s bodyc bytes %s ', routing_key, len(bodyc))
-        self.__rmq_channel.basic_publish(exchange=self.__rabbitmq_exchange, routing_key=routing_key, body=bodyc)
+        self.__rmq_channel.basic_publish(exchange=self.__rabbitmq_exchange, routing_key=routing_key, body=bodyc, properties=pika.BasicProperties(delivery_mode=2))
 
     def __consume_stream(self, msg):
         self.__check_shutdown()
