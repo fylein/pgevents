@@ -28,7 +28,7 @@ class PGEventConsumer:
         self.__check_shutdown()
         self.__rmq_conn = pika.BlockingConnection(pika.URLParameters(self.__rabbitmq_url))
         self.__rmq_channel = self.__rmq_conn.channel()
-        self.__rmq_channel.exchange_declare(exchange=self.__rabbitmq_exchange, exchange_type='topic')
+        self.__rmq_channel.exchange_declare(exchange=self.__rabbitmq_exchange, exchange_type='topic', durable=True)
         res = self.__rmq_channel.queue_declare(self.__queue_name, durable=True, exclusive=False, auto_delete=True)
 
         self.__queue_name = res.method.queue

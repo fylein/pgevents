@@ -14,6 +14,7 @@ setup(
     entry_points='''
         [console_scripts]
         producer=producer:producer
+        producer_public_events=producer_public_events:producer
         consumer_debug=consumer_debug:consumer_debug
         consumer_audit=consumer_audit:consumer_audit
     ''',

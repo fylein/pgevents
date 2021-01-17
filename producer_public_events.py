@@ -9,6 +9,25 @@ from common.pgevent_producer import PGEventProducer
 
 logger = logging.getLogger(__name__)
 
+
+def convert_pgevent_to_public_event(pgdatabase, event):
+    routing_key = None
+    body = None
+
+    logger.debug("hahahaha: %s", event.tablename)
+
+    if event.tablename == f"{pgdatabase}.platform_schema.expenses_rot":
+        routing_key = 'etxns.created'
+        body = event.id
+
+    return routing_key, body
+
+
+class PGEventProducerPublicEvent(PGEventProducer):
+    def intercept(self, pgdatabase, event):
+        return convert_pgevent_to_public_event(pgdatabase, event)
+
+
 @click.command()
 @click.option('--pghost', default=lambda: os.environ.get('PGHOST', None), required=True, help='Postgresql Host ($PGHOST)')
 @click.option('--pgport', default=lambda: os.environ.get('PGPORT', 5432), required=True, help='Postgresql Host ($PGPORT)')
@@ -21,8 +40,8 @@ logger = logging.getLogger(__name__)
 @click.option('--rabbitmq-exchange', default=lambda: os.environ.get('RABBITMQ_EXCHANGE', None), required=True, help='RabbitMQ exchange ($RABBITMQ_EXCHANGE)')
 def producer(pghost, pgport, pgdatabase, pguser, pgpassword, pgslot, pgtables, rabbitmq_url, rabbitmq_exchange):
     init_logging()
-    p = PGEventProducer(pghost=pghost, pgport=pgport, pgdatabase=pgdatabase, pguser=pguser, pgpassword=pgpassword,
-                        pgslot=pgslot, pgtables=pgtables, rabbitmq_url=rabbitmq_url, rabbitmq_exchange=rabbitmq_exchange)
+    p = PGEventProducerPublicEvent(pghost=pghost, pgport=pgport, pgdatabase=pgdatabase, pguser=pguser, pgpassword=pgpassword,
+                                   pgslot=pgslot, pgtables=pgtables, rabbitmq_url=rabbitmq_url, rabbitmq_exchange=rabbitmq_exchange)
     signal.signal(signal.SIGTERM, p.shutdown)
     signal.signal(signal.SIGINT, p.shutdown)
     p.process()

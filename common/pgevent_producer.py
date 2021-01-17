@@ -8,12 +8,14 @@ from psycopg2.extras import LogicalReplicationConnection
 
 from common.compression import compress
 from common.decorators import retry
-from common.msg import msg_to_event
+from common.msg import msg_to_event, Event
 
 logger = logging.getLogger(__name__)
 
+
 class PGEventProducerShutdownException(Exception):
     pass
+
 
 class PGEventProducer:
     def __init__(self, pghost, pgport, pgdatabase, pguser, pgpassword, pgslot, pgtables, rabbitmq_url, rabbitmq_exchange):
@@ -50,28 +52,42 @@ class PGEventProducer:
         self.__check_shutdown()
         self.__rmq_conn = pika.BlockingConnection(pika.URLParameters(self.__rabbitmq_url))
         self.__rmq_channel = self.__rmq_conn.channel()
-        self.__rmq_channel.exchange_declare(exchange=self.__rabbitmq_exchange, exchange_type='topic')
+        self.__rmq_channel.exchange_declare(exchange=self.__rabbitmq_exchange, exchange_type='topic', durable=True)
 
     def __check_shutdown(self):
         if self.__shutdown:
             raise PGEventProducerShutdownException('shutting down')
 
-    def __send_event(self, event):
-        routing_key = event['tablename']
-        body = json.dumps(event, sort_keys=True, default=str)
-        bodyc = compress(body)
-        logger.debug('sending routing_key %s bodyc bytes %s ', routing_key, len(bodyc))
-        self.__rmq_channel.basic_publish(exchange=self.__rabbitmq_exchange, routing_key=routing_key, body=bodyc, properties=pika.BasicProperties(delivery_mode=2))
+    def __send_event(self, routing_key, body):
+        logger.debug('sending routing_key %s body bytes %s ', routing_key, len(body))
+        self.__rmq_channel.basic_publish(
+            exchange=self.__rabbitmq_exchange,
+            routing_key=routing_key,
+            body=body,
+            properties=pika.BasicProperties(delivery_mode=2)
+        )
+
+    def intercept(self, pgdatabase, event: Event):
+        # pylint: disable=no-self-use
+        # pylint: disable=unused-argument
+
+        routing_key = event.tablename
+        data = json.dumps(event.to_dict(), sort_keys=True, default=str)
+        body = compress(data)
+
+        return routing_key, body
 
     def __consume_stream(self, msg):
         self.__check_shutdown()
         event = msg_to_event(self.__pgdatabase, msg)
         if event:
-            self.__send_event(event=event)
+            routing_key, body = self.intercept(self.__pgdatabase, event)
+            if routing_key:
+                self.__send_event(routing_key, body)
         msg.cursor.send_feedback(flush_lsn=msg.data_start)
 
     def shutdown(self, *args):
-        #pylint: disable=unused-argument
+        # pylint: disable=unused-argument
         logger.warning('Shutdown has been requested')
         self.__shutdown = True
 

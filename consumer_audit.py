@@ -12,6 +12,7 @@ from common.pgevent_consumer import PGEventConsumer
 
 logger = logging.getLogger(__name__)
 
+
 class ConsumerAuditEventProcessor:
     def __init__(self, pghost, pgport, pgdatabase, pguser, pgpassword, pgaudittable):
         self.__pghost = pghost
@@ -51,6 +52,7 @@ class ConsumerAuditEventProcessor:
         self.__db_cur.execute(self.__insert_statement, doc)
         self.__db_conn.commit()
 
+
 @click.command()
 @click.option('--rabbitmq-url', default=lambda: os.environ.get('RABBITMQ_URL', None), required=True, help='RabbitMQ url ($RABBITMQ_URL)')
 @click.option('--rabbitmq-exchange', default=lambda: os.environ.get('RABBITMQ_EXCHANGE', None), required=True, help='RabbitMQ exchange ($RABBITMQ_EXCHANGE)')
@@ -69,6 +71,7 @@ def consumer_audit(rabbitmq_url, rabbitmq_exchange, binding_keys, queue_name, pg
     signal.signal(signal.SIGTERM, pgevent_consumer.shutdown)
     signal.signal(signal.SIGINT, pgevent_consumer.shutdown)
     pgevent_consumer.process()
+
 
 if __name__ == '__main__':
     consumer_audit()
