@@ -1,7 +1,7 @@
 import logging
 import os
 import signal
-
+import json
 import click
 
 from common.logging import init_logging
@@ -18,7 +18,9 @@ def convert_pgevent_to_public_event(pgdatabase, event):
 
     if event.tablename == f"{pgdatabase}.platform_schema.expenses_rot":
         routing_key = 'etxns.created'
-        body = event.id
+        body = json.dumps({
+            'id': event.id
+        })
 
     return routing_key, body
 
