@@ -10,18 +10,22 @@ def __clean_jsonb_str(val):
     if isinstance(val, str):
         strval = val
         if strval.startswith('['):
-            res = []
-
             strlist = []
 
             try:
                 strlist = json.loads(strval)
+                res = []
             except JSONDecodeError as e:
                 logger.error("couldn't decode: %s, raise exception: %s", strval, str(e))
+                res = None
 
             for strv in strlist:
                 v = __clean_jsonb_str(strv)
                 res.append(v)
+
+            if res is None:
+                res = strval
+
             return res
 
         elif strval.startswith('{'):
