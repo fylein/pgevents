@@ -18,7 +18,9 @@ def convert_pgevent_to_public_event(pgdatabase, event):
     logger.info("convert_pgevent_to_public_event for table: %s and action: %s", event.tablename, event.action)
 
     if event.tablename == f"{pgdatabase}.platform_schema.employees_rot":
+        logger.info("a1")
         if event.action == 'I':
+            logger.info("a2")
             routing_key = 'eous.created'
             payload = {
                 'id': event.id,
@@ -27,6 +29,7 @@ def convert_pgevent_to_public_event(pgdatabase, event):
                 }
             }
         elif event.action == 'U':
+            logger.info("a3")
             routing_key = 'eous.policy_run'
             payload = {
                 'id': event.id
@@ -35,6 +38,7 @@ def convert_pgevent_to_public_event(pgdatabase, event):
     if payload is not None:
         body = json.dumps(payload)
 
+    logger.info("routing_key: %s, body: %s", routing_key, body)
     return routing_key, body
 
 
