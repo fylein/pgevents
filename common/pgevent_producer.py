@@ -59,7 +59,7 @@ class PGEventProducer:
             raise PGEventProducerShutdownException('shutting down')
 
     def __send_event(self, routing_key, body):
-        logger.debug('sending routing_key %s body bytes %s ', routing_key, len(body))
+        logger.info('sending routing_key %s body bytes %s ', routing_key, len(body))
         self.__rmq_channel.basic_publish(
             exchange=self.__rabbitmq_exchange,
             routing_key=routing_key,
@@ -81,8 +81,8 @@ class PGEventProducer:
         self.__check_shutdown()
         event = msg_to_event(self.__pgdatabase, msg)
         if event:
+            logger.debug('event: %s', event.id)
             routing_key, body = self.intercept(self.__pgdatabase, event)
-            logger.info("routing_key: %s, bool(routing_key): %s", routing_key, bool(routing_key))
             if routing_key:
                 self.__send_event(routing_key, body)
         msg.cursor.send_feedback(flush_lsn=msg.data_start)
