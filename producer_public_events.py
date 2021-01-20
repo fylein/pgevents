@@ -15,7 +15,7 @@ def convert_pgevent_to_public_event(pgdatabase, event):
     payload = None
     body = None
 
-    logger.debug("convert_pgevent_to_public_event for table: %s and action: %s", event.tablename, event.action)
+    logger.info("convert_pgevent_to_public_event for table: %s and action: %s", event.tablename, event.action)
 
     if event.tablename == f"{pgdatabase}.platform_schema.employees_rot":
         if event.action == 'I':
