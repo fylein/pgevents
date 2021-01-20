@@ -12,15 +12,28 @@ logger = logging.getLogger(__name__)
 
 def convert_pgevent_to_public_event(pgdatabase, event):
     routing_key = None
+    payload = None
     body = None
 
     logger.debug("hahahaha: %s", event.tablename)
 
-    if event.tablename == f"{pgdatabase}.platform_schema.expenses_rot":
-        routing_key = 'etxns.created'
-        body = json.dumps({
-            'id': event.id
-        })
+    if event.tablename == f"{pgdatabase}.platform_schema.employees_rot":
+        if event.action == 'I':
+            routing_key = 'eous.created'
+            payload = {
+                'id': event.id,
+                'body': {
+                    'inviterId': event.updated_by['employee_id']
+                }
+            }
+        elif event.action == 'U':
+            routing_key = 'eous.policy_run'
+            payload = {
+                'id': event.id
+            }
+
+    if payload is not None:
+        body = json.dumps(payload)
 
     return routing_key, body
 
