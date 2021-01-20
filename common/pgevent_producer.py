@@ -82,7 +82,7 @@ class PGEventProducer:
         event = msg_to_event(self.__pgdatabase, msg)
         if event:
             routing_key, body = self.intercept(self.__pgdatabase, event)
-            logger.info("routing_key: %s, bool(routing_key)", routing_key, bool(routing_key))
+            logger.info("routing_key: %s, bool(routing_key): %s", routing_key, bool(routing_key))
             if routing_key:
                 self.__send_event(routing_key, body)
         msg.cursor.send_feedback(flush_lsn=msg.data_start)
