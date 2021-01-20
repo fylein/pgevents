@@ -79,9 +79,7 @@ class PGEventProducer:
 
     def __consume_stream(self, msg):
         self.__check_shutdown()
-        logger.info("msg:%s", str(msg))
         event = msg_to_event(self.__pgdatabase, msg)
-        logger.info("event:%s", str(event.id))
         if event:
             routing_key, body = self.intercept(self.__pgdatabase, event)
             if routing_key:

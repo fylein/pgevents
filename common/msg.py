@@ -131,6 +131,7 @@ class Event:
 
 def msg_to_event(pgdatabase, msg):
     pl = json.loads(msg.payload)
+    logger.info("msg:%s", msg.payload)
     if pl['action'] not in ['I', 'U', 'D']:
         return None
     logger.debug('got payload %s', msg.payload)
