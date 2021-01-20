@@ -2,6 +2,8 @@ import json
 import logging
 from dataclasses import dataclass
 
+from json import JSONDecodeError
+
 logger = logging.getLogger(__name__)
 
 
@@ -10,12 +12,24 @@ def __clean_jsonb_str(val):
     if isinstance(val, str):
         strval = val
         if strval.startswith('['):
-            res = []
-            strlist = json.loads(strval)
+            strlist = []
+
+            try:
+                strlist = json.loads(strval)
+                res = []
+            except JSONDecodeError as e:
+                logger.error("couldn't decode: %s, raise exception: %s", strval, str(e))
+                res = None
+
             for strv in strlist:
                 v = __clean_jsonb_str(strv)
                 res.append(v)
+
+            if res is None:
+                res = strval
+
             return res
+
         elif strval.startswith('{'):
             res = {}
             strdict = json.loads(strval)
@@ -41,12 +55,15 @@ def __clean_col_value(col):
         return col['value'].replace('\\"', '"')
 
     if col['type'] in ['jsonb']:
+        logger.info('calling __clean_jsonb_str for type jsonb')
         return __clean_jsonb_str(val=col['value'])
 
     if col['name'] in ['extracted_data', 'custom_attributes', 'activity_details']:
+        logger.info('calling __clean_jsonb_str name: %s', col['name'])
         return __clean_jsonb_str(val=col['value'])
 
     if col['name'] in ['last_updated_by']:
+        logger.info('calling __clean_jsonb_str name: %s', col['name'])
         res = __clean_jsonb_str(val=col['value'])
         if isinstance(res, str):
             return {'org_user_id': res}
