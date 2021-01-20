@@ -17,7 +17,7 @@ def __clean_jsonb_str(val):
             try:
                 strlist = json.loads(strval)
             except JSONDecodeError as e:
-                logger.error("couldn't decode: {}".format(strval))
+                logger.error("couldn't decode: %s, raise exception: %s", strval, str(e))
 
             for strv in strlist:
                 v = __clean_jsonb_str(strv)
@@ -53,11 +53,11 @@ def __clean_col_value(col):
         return __clean_jsonb_str(val=col['value'])
 
     if col['name'] in ['extracted_data', 'custom_attributes', 'activity_details']:
-        logger.info('calling __clean_jsonb_str name: {}'.format(col['name']))
+        logger.info('calling __clean_jsonb_str name: %s', col['name'])
         return __clean_jsonb_str(val=col['value'])
 
     if col['name'] in ['last_updated_by']:
-        logger.info('calling __clean_jsonb_str name: {}'.format(col['name']))
+        logger.info('calling __clean_jsonb_str name: %s', col['name'])
         res = __clean_jsonb_str(val=col['value'])
         if isinstance(res, str):
             return {'org_user_id': res}
