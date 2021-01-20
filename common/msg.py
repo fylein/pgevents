@@ -1,6 +1,8 @@
 import json
 import logging
 
+from json import JSONDecodeError
+
 logger = logging.getLogger(__name__)
 
 # this function recursively fixes jsonb that is encoded as string
@@ -9,11 +11,19 @@ def __clean_jsonb_str(val):
         strval = val
         if strval.startswith('['):
             res = []
-            strlist = json.loads(strval)
+
+            strlist = []
+
+            try:
+                strlist = json.loads(strval)
+            except JSONDecodeError as e:
+                logger.error("couldn't decode: {}".format(strval))
+
             for strv in strlist:
                 v = __clean_jsonb_str(strv)
                 res.append(v)
             return res
+
         elif strval.startswith('{'):
             res = {}
             strdict = json.loads(strval)
@@ -28,8 +38,9 @@ def __clean_jsonb_str(val):
     else:
         return val
 
+
 def __clean_col_value(col):
-    #pylint: disable=too-many-return-statements
+    # pylint: disable=too-many-return-statements
 
     if col['value'] is None:
         return None
@@ -38,12 +49,15 @@ def __clean_col_value(col):
         return col['value'].replace('\\"', '"')
 
     if col['type'] in ['jsonb']:
+        logger.info('calling __clean_jsonb_str for type jsonb')
         return __clean_jsonb_str(val=col['value'])
 
     if col['name'] in ['extracted_data', 'custom_attributes', 'activity_details']:
+        logger.info('calling __clean_jsonb_str name: {}'.format(col['name']))
         return __clean_jsonb_str(val=col['value'])
 
     if col['name'] in ['last_updated_by']:
+        logger.info('calling __clean_jsonb_str name: {}'.format(col['name']))
         res = __clean_jsonb_str(val=col['value'])
         if isinstance(res, str):
             return {'org_user_id': res}
