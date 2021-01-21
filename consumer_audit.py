@@ -35,18 +35,18 @@ class ConsumerAuditEventProcessor:
 
     def __call__(self, event):
         logger.debug('got event %s', event)
-        if event['action'] == 'U' and not event['diff']:
+        if event.action == 'U' and not event.diff:
             logger.debug('skipping empty update event')
             return
         doc = {
-            'action': event['action'],
-            'id': event['id'],
-            'updated_at': event['updated_at'],
-            'new': Json(event['new']),
-            'old': Json(event['old']),
-            'diff': Json(event['diff']),
-            'tablename': event['tablename'],
-            'updated_by': Json(event['updated_by'])
+            'action': event.action,
+            'id': event.id,
+            'updated_at': event.updated_at,
+            'new': Json(event.new),
+            'old': Json(event.old),
+            'diff': Json(event.diff),
+            'tablename': event.tablename,
+            'updated_by': Json(event.updated_by)
         }
         logger.debug('inserting doc %s', doc)
         self.__db_cur.execute(self.__insert_statement, doc)

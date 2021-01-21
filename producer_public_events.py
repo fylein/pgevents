@@ -17,14 +17,19 @@ def convert_pgevent_to_public_event(pgdatabase, event):
 
     logger.debug("convert_pgevent_to_public_event for table: %s and action: %s", event.tablename, event.action)
 
+    logger.debug("event updated_by: %s", event.updated_by)
+
+    if event.updated_by and event.updated_by.get('written_from') != 'platform-api':
+        logger.debug('skipping this event, was not written from platform-api')
+        return routing_key, body
+
     if event.tablename == f"{pgdatabase}.platform_schema.employees_rot":
         if event.action == 'I':
-            logger.info("a2")
             routing_key = 'eous.created'
             payload = {
                 'id': event.id,
                 'body': {
-                    'inviterId': event.updated_by['employee_id']
+                    'inviterId': event.updated_by.get('employee_id')
                 }
             }
         elif event.action == 'U':

@@ -6,10 +6,14 @@ import pika
 from common.decorators import retry
 from common.compression import decompress
 
+from .msg import Event
+
 logger = logging.getLogger(__name__)
+
 
 class PGEventConsumerShutdownException(Exception):
     pass
+
 
 class PGEventConsumer:
     def __init__(self, rabbitmq_url, rabbitmq_exchange, queue_name, binding_keys, process_event_fn):
@@ -41,10 +45,11 @@ class PGEventConsumer:
             raise PGEventConsumerShutdownException('shutting down')
 
     def __process_body(self, ch, method, properties, body):
-        #pylint: disable=unused-argument
+        # pylint: disable=unused-argument
         self.__check_shutdown()
         bodyu = decompress(body)
-        event = json.loads(bodyu)
+        event_dict = json.loads(bodyu)
+        event = Event(**event_dict)
         self.__process_event_fn(event)
 
     def process(self):
@@ -56,6 +61,6 @@ class PGEventConsumer:
             return
 
     def shutdown(self, *args):
-        #pylint: disable=unused-argument
+        # pylint: disable=unused-argument
         logger.warning('Shutdown has been requested')
         self.__shutdown = True

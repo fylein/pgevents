@@ -115,23 +115,21 @@ def __diff_dict(oldd, newd):
 
 @dataclass
 class Event:
-    tablename = None
-    action = None
-    old = None
-    new = None
-    id = None
-    updated_at = None
-    updated_by = None
-    diff = None
+    tablename: str = None
+    action: str = None
+    old: dict = None
+    new: dict = None
+    id: str = None
+    updated_at: dict = None
+    updated_by: dict = None
+    diff: dict = None
 
     def to_dict(self):
-        logger.info("aaaaaaaaddddddddddiiiiiiiiiiii")
         return self.__dict__
 
 
 def msg_to_event(pgdatabase, msg):
     pl = json.loads(msg.payload)
-    logger.info("msg:%s", msg.payload)
     if pl['action'] not in ['I', 'U', 'D']:
         return None
     logger.debug('got payload %s', msg.payload)
@@ -145,13 +143,13 @@ def msg_to_event(pgdatabase, msg):
         event.new = __clean_columns(event.tablename, pl['columns'])
         event.id = event.new.pop('id', None)
         event.updated_at = event.new.pop('updated_at', None)
-        event.updated_by = event.new.pop('last_updated_by', None)
+        event.updated_by = event.new.pop('last_updated_by', None) or event.new.pop('updated_by', None)
     elif event.action == 'U':
         event.new = __clean_columns(event.tablename, pl['columns'])
         event.old = __clean_columns(event.tablename, pl['identity'])
         event.id = event.new.pop('id', None)
         event.updated_at = event.new.pop('updated_at', None)
-        event.updated_by = event.new.pop('last_updated_by', None)
+        event.updated_by = event.new.pop('last_updated_by', None) or event.new.pop('updated_by', None)
         event.old.pop('last_updated_by', None)
         event.old.pop('updated_at', None)
         event.diff = __diff_dict(event.old, event.new)
@@ -159,6 +157,6 @@ def msg_to_event(pgdatabase, msg):
         event.old = __clean_columns(event.tablename, pl['identity'])
         event.id = event.old.pop('id', None)
         event.updated_at = event.old.pop('updated_at', None)
-        event.updated_by = event.old.pop('last_updated_by', None)
+        event.updated_by = event.old.pop('last_updated_by', None) or event.old.pop('updated_by', None)
 
     return event
