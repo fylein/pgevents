@@ -8,11 +8,13 @@ from common.compression import decompress
 
 logger = logging.getLogger(__name__)
 
+
 class PGEventConsumerShutdownException(Exception):
     pass
 
+
 class PGEventConsumer:
-    def __init__(self, rabbitmq_url, rabbitmq_exchange, queue_name, binding_keys, process_event_fn):
+    def __init__(self, rabbitmq_url, rabbitmq_exchange, queue_name, binding_keys, process_event_fn, pg_msg_event_cls):
         self.__rabbitmq_url = rabbitmq_url
         self.__rabbitmq_exchange = rabbitmq_exchange
         self.__queue_name = queue_name
@@ -22,6 +24,7 @@ class PGEventConsumer:
         self.__shutdown = False
         self.__process_event_fn = process_event_fn
         self.__connect_rabbitmq()
+        self.pg_msg_event_cls = pg_msg_event_cls
 
     @retry(n=3, backoff=15, exceptions=(pika.exceptions.StreamLostError, pika.exceptions.AMQPConnectionError))
     def __connect_rabbitmq(self):
@@ -41,21 +44,26 @@ class PGEventConsumer:
             raise PGEventConsumerShutdownException('shutting down')
 
     def __process_body(self, ch, method, properties, body):
-        #pylint: disable=unused-argument
+        # pylint: disable=unused-argument
         self.__check_shutdown()
         bodyu = decompress(body)
-        event = json.loads(bodyu)
+        msg_event = self.pg_msg_event_cls()
+        event = msg_event.loads(bodyu)
         self.__process_event_fn(event)
 
     def process(self):
         try:
-            self.__rmq_channel.basic_consume(queue=self.__queue_name, on_message_callback=self.__process_body, auto_ack=True)
+            self.__rmq_channel.basic_consume(
+                queue=self.__queue_name,
+                on_message_callback=self.__process_body,
+                auto_ack=True
+            )
             self.__rmq_channel.start_consuming()
         except PGEventConsumerShutdownException:
             logger.warning('exiting process loop')
             return
 
     def shutdown(self, *args):
-        #pylint: disable=unused-argument
+        # pylint: disable=unused-argument
         logger.warning('Shutdown has been requested')
         self.__shutdown = True

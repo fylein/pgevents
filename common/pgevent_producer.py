@@ -8,7 +8,6 @@ from psycopg2.extras import LogicalReplicationConnection
 
 from common.compression import compress
 from common.decorators import retry
-from common.msg import msg_to_event
 
 logger = logging.getLogger(__name__)
 
@@ -56,22 +55,32 @@ class PGEventProducer:
         if self.__shutdown:
             raise PGEventProducerShutdownException('shutting down')
 
-    def __send_event(self, event):
-        routing_key = event['tablename']
-        body = json.dumps(event, sort_keys=True, default=str)
+    def __send_event(self, routing_key, body):
         bodyc = compress(body)
         logger.debug('sending routing_key %s bodyc bytes %s ', routing_key, len(bodyc))
-        self.__rmq_channel.basic_publish(exchange=self.__rabbitmq_exchange, routing_key=routing_key, body=bodyc, properties=pika.BasicProperties(delivery_mode=2))
+        self.__rmq_channel.basic_publish(
+            exchange=self.__rabbitmq_exchange,
+            routing_key=routing_key,
+            body=bodyc,
+            properties=pika.BasicProperties(delivery_mode=2)
+        )
 
     def __consume_stream(self, msg):
         self.__check_shutdown()
-        event = msg_to_event(self.__pgdatabase, msg)
-        if event:
-            self.__send_event(event=event)
+        pl = json.loads(msg.payload)
+
+        if pl['action'] in ['I', 'U', 'D']:
+
+            tablename = f"{self.__pgdatabase}.{pl['schema']}.{pl['table']}"
+            routing_key = tablename
+
+            # sending the payload without any transformation
+            self.__send_event(routing_key, msg.payload)
+
         msg.cursor.send_feedback(flush_lsn=msg.data_start)
 
     def shutdown(self, *args):
-        #pylint: disable=unused-argument
+        # pylint: disable=unused-argument
         logger.warning('Shutdown has been requested')
         self.__shutdown = True
 

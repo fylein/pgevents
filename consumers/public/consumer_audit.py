@@ -8,7 +8,7 @@ from psycopg2.extras import Json
 
 from common.decorators import retry
 from common.logging import init_logging
-from common.pgevent_consumer import PGEventConsumer
+from common.event import PGPublicEvent
 
 logger = logging.getLogger(__name__)
 
@@ -34,22 +34,23 @@ class ConsumerAuditEventProcessor:
 
     def __call__(self, event):
         logger.debug('got event %s', event)
-        if event['action'] == 'U' and not event['diff']:
+        if event.action == 'U' and not event.diff:
             logger.debug('skipping empty update event')
             return
         doc = {
-            'action': event['action'],
-            'id': event['id'],
-            'updated_at': event['updated_at'],
-            'new': Json(event['new']),
-            'old': Json(event['old']),
-            'diff': Json(event['diff']),
-            'tablename': event['tablename'],
-            'updated_by': Json(event['updated_by'])
+            'action': event.action,
+            'id': event.id,
+            'updated_at': event.updated_at,
+            'new': Json(event.new),
+            'old': Json(event.old),
+            'diff': Json(event.diff),
+            'tablename': event.tablename,
+            'updated_by': Json(event.updated_by)
         }
         logger.debug('inserting doc %s', doc)
         self.__db_cur.execute(self.__insert_statement, doc)
         self.__db_conn.commit()
+
 
 @click.command()
 @click.option('--rabbitmq-url', default=lambda: os.environ.get('RABBITMQ_URL', None), required=True, help='RabbitMQ url ($RABBITMQ_URL)')
@@ -64,8 +65,24 @@ class ConsumerAuditEventProcessor:
 @click.option('--pgaudittable', default=lambda: os.environ.get('PGAUDITTABLE', None), required=True, help='Postgresql Audit Table ($PGAUDITTABLE)')
 def consumer_audit(rabbitmq_url, rabbitmq_exchange, binding_keys, queue_name, pghost, pgport, pgdatabase, pguser, pgpassword, pgaudittable):
     init_logging()
-    process_event_fn = ConsumerAuditEventProcessor(pghost=pghost, pgport=pgport, pgdatabase=pgdatabase, pguser=pguser, pgpassword=pgpassword, pgaudittable=pgaudittable)
-    pgevent_consumer = PGEventConsumer(rabbitmq_url=rabbitmq_url, rabbitmq_exchange=rabbitmq_exchange, queue_name=queue_name, binding_keys=binding_keys, process_event_fn=process_event_fn)
+    process_event_fn = ConsumerAuditEventProcessor(
+        pghost=pghost,
+        pgport=pgport,
+        pgdatabase=pgdatabase,
+        pguser=pguser,
+        pgpassword=pgpassword,
+        pgaudittable=pgaudittable
+    )
+
+    pgevent_consumer = PGEventConsumer(
+        rabbitmq_url=rabbitmq_url,
+        rabbitmq_exchange=rabbitmq_exchange,
+        queue_name=queue_name,
+        binding_keys=binding_keys,
+        process_event_fn=process_event_fn,
+        pg_msg_event_cls=PGPublicEvent
+    )
+
     signal.signal(signal.SIGTERM, pgevent_consumer.shutdown)
     signal.signal(signal.SIGINT, pgevent_consumer.shutdown)
     pgevent_consumer.process()
