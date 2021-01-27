@@ -20,7 +20,7 @@ WORKDIR /fyle_pgevents
 
 COPY . /fyle_pgevents/
 
-RUN pylint --rcfile=.pylintrc common *.py
+RUN pylint --rcfile=.pylintrc common producers consumers *.py
 
 RUN pip install .
 

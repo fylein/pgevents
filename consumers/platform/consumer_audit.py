@@ -9,7 +9,7 @@ from psycopg2.extras import Json
 from common.decorators import retry
 from common.logging import init_logging
 from common.pgevent_consumer import PGEventConsumer
-from .pg_public_event import PGPublicEvent
+from .pg_platform_event import PGPlatformEvent
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +30,7 @@ class ConsumerAuditEventProcessor:
 
     @retry(n=3, backoff=15, exceptions=(psycopg2.OperationalError, psycopg2.InterfaceError))
     def __connect_db(self):
+        logger.debug("establishing a new db connection...")
         self.__db_conn = psycopg2.connect(host=self.__pghost, port=self.__pgport, dbname=self.__pgdatabase, user=self.__pguser,
                                           password=self.__pgpassword)
         self.__db_cur = self.__db_conn.cursor()
@@ -82,7 +83,7 @@ def consumer_audit(rabbitmq_url, rabbitmq_exchange, binding_keys, queue_name, pg
         queue_name=queue_name,
         binding_keys=binding_keys,
         process_event_fn=process_event_fn,
-        pg_msg_event_cls=PGPublicEvent
+        pg_msg_event_cls=PGPlatformEvent
     )
 
     signal.signal(signal.SIGTERM, pgevent_consumer.shutdown)

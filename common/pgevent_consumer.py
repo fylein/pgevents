@@ -1,6 +1,4 @@
-import json
 import logging
-
 import pika
 
 from common.decorators import retry
@@ -23,21 +21,26 @@ class PGEventConsumer:
         self.__rmq_channel = None
         self.__shutdown = False
         self.__process_event_fn = process_event_fn
-        self.__connect_rabbitmq()
         self.pg_msg_event_cls = pg_msg_event_cls
+        self.__connect_rabbitmq()
 
     @retry(n=3, backoff=15, exceptions=(pika.exceptions.StreamLostError, pika.exceptions.AMQPConnectionError))
     def __connect_rabbitmq(self):
         self.__check_shutdown()
         self.__rmq_conn = pika.BlockingConnection(pika.URLParameters(self.__rabbitmq_url))
         self.__rmq_channel = self.__rmq_conn.channel()
-        self.__rmq_channel.exchange_declare(exchange=self.__rabbitmq_exchange, exchange_type='topic')
+        self.__rmq_channel.exchange_declare(exchange=self.__rabbitmq_exchange, exchange_type='topic', durable=True)
         res = self.__rmq_channel.queue_declare(self.__queue_name, durable=True, exclusive=False, auto_delete=True)
 
         self.__queue_name = res.method.queue
         for binding_key in self.__binding_keys.split(','):
-            logger.info('binding to exchange %s, queue %s, binding_key %s', self.__rabbitmq_exchange, self.__queue_name, binding_key)
-            self.__rmq_channel.queue_bind(exchange=self.__rabbitmq_exchange, queue=self.__queue_name, routing_key=binding_key)
+            logger.info('binding to exchange %s, queue %s, binding_key %s',
+                        self.__rabbitmq_exchange, self.__queue_name, binding_key)
+            self.__rmq_channel.queue_bind(
+                exchange=self.__rabbitmq_exchange,
+                queue=self.__queue_name,
+                routing_key=binding_key
+            )
 
     def __check_shutdown(self):
         if self.__shutdown:
@@ -47,8 +50,8 @@ class PGEventConsumer:
         # pylint: disable=unused-argument
         self.__check_shutdown()
         bodyu = decompress(body)
-        msg_event = self.pg_msg_event_cls()
-        event = msg_event.loads(bodyu)
+        event = self.pg_msg_event_cls()
+        event.loads(bodyu)
         self.__process_event_fn(event)
 
     def process(self):

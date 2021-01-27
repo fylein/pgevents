@@ -49,7 +49,7 @@ class PGEventProducer:
         self.__check_shutdown()
         self.__rmq_conn = pika.BlockingConnection(pika.URLParameters(self.__rabbitmq_url))
         self.__rmq_channel = self.__rmq_conn.channel()
-        self.__rmq_channel.exchange_declare(exchange=self.__rabbitmq_exchange, exchange_type='topic')
+        self.__rmq_channel.exchange_declare(exchange=self.__rabbitmq_exchange, exchange_type='topic', durable=True)
 
     def __check_shutdown(self):
         if self.__shutdown:

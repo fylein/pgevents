@@ -1,6 +1,9 @@
+import logging
 import json
 from json import JSONDecodeError
 from abc import ABCMeta, abstractmethod
+
+logger = logging.getLogger(__name__)
 
 class PGEvent(metaclass=ABCMeta):
     @abstractmethod
@@ -64,6 +67,7 @@ class PGEvent(metaclass=ABCMeta):
         return d
 
     def diff_dict(self, oldd, newd):
+        # pylint: disable=no-self-use
         d = {}
         for nk, nv in newd.items():
             if nk not in oldd and nv is not None:
@@ -73,9 +77,11 @@ class PGEvent(metaclass=ABCMeta):
         return d
 
     def skip_col(self, tablename, colname):
+        # pylint: disable=unused-argument,no-self-use
         return False
 
     def clean_col_value(self, col):
+        # pylint: disable=no-self-use
         return col['value']
 
     def to_dict(self):

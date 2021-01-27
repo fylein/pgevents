@@ -1,10 +1,10 @@
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
     name="pg_recvlogical",
     version='0.1',
-    packages=['', 'common'],
+    packages=find_packages(),
     install_requires=[
         'pika==1.1.0',
         'psycopg2==2.8.6',
@@ -13,8 +13,10 @@ setup(
     ],
     entry_points='''
         [console_scripts]
-        producer=producer:producer
+        producer=producers.pgevent_producer:producer
         consumer_debug=consumer_debug:consumer_debug
-        consumer_audit=consumer_audit:consumer_audit
+        consumer_audit_public=consumers.public.consumer_audit:consumer_audit
+        consumer_audit_platform=consumers.platform.consumer_audit:consumer_audit
+        consumer_event_bridge=consumers.platform.consumer_event_bridge:consumer_event_bridge
     ''',
 )
