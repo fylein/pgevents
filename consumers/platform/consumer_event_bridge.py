@@ -43,7 +43,8 @@ class ConsumerEventBridge:
         payload = None
 
         logger.debug('event.updated_by: %s', json.dumps(event.updated_by))
-        if event.updated_by and event.updated_by.get('written_from') != 'platform-api':
+        if event.updated_by is None or event.updated_by.get('written_from') != 'platform-api':
+            # raise event only when updated_by exists and value of written_from is 'platform-api'
             return
 
         # to move this to a separate transform function
@@ -53,7 +54,7 @@ class ConsumerEventBridge:
                 payload = {
                     'id': event.id,
                     'body': {
-                        'inviterId': event.updated_by.get('employee_id')
+                        'inviterId': event.updated_by['employee_id']
                     }
                 }
             elif event.action == 'U':
