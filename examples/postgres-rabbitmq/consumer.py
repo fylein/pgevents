@@ -1,20 +1,21 @@
-from fyle_pgevents.common.rabbitmq_connector import RabbitMQConnector
-
 import log
 import os
 import signal
 import click
 
-from fyle_pgevents.common.event_consumer import EventConsumer
+from fyle_pgevents.event import BaseEvent
+from fyle_pgevents.qconnector import RabbitMQConnector
+from fyle_pgevents.consumers import EventConsumer
 
 logger = log.get_logger(__name__)
 
 
 class EventLogger(EventConsumer):
 
-    def process_message(self, routing_key, payload):
-        logger.info('routing_key %s'%routing_key)
-        logger.info('routing_key %s'%payload)
+    def process_message(self, routing_key, event: BaseEvent):
+        logger.info('routing_key %s' % routing_key)
+        logger.info('event %s' % event)
+        logger.info('event %s' % event.to_dict())
 
 
 @click.command()
@@ -25,6 +26,7 @@ class EventLogger(EventConsumer):
 def log_event(rabbitmq_url, rabbitmq_exchange, binding_keys, queue_name):
     event_logger = EventLogger(
         qconnector_cls=RabbitMQConnector,
+        event_cls=BaseEvent,
         rabbitmq_url=rabbitmq_url,
         rabbitmq_exchange=rabbitmq_exchange,
         queue_name=queue_name,

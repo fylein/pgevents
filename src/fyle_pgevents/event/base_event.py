@@ -6,7 +6,7 @@ from fyle_pgevents.common.log import get_logger
 logger = get_logger(__name__)
 
 
-class PGPlatformEvent:
+class BaseEvent:
     table_name: str = None
     old: dict = {}
     new: dict = {}
@@ -142,7 +142,7 @@ class PGPlatformEvent:
             raise NotImplementedError()
 
     def __repr__(self):
-        return "table_name: %s" % self.table_name
+        return "Event <table_name: %s>" % self.table_name
 
     def from_dict(self, payload_dict):
         self.table_name = payload_dict.get('table_name')

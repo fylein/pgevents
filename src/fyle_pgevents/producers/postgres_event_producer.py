@@ -1,4 +1,3 @@
-import logging
 import json
 from abc import ABC, abstractmethod
 from typing import Union
@@ -6,8 +5,8 @@ from typing import Union
 import psycopg2
 from psycopg2.extras import LogicalReplicationConnection
 
-from fyle_pgevents.common.event import PGPlatformEvent
-from fyle_pgevents.common.q_connector import QConnector
+from fyle_pgevents.event import BaseEvent
+from fyle_pgevents.qconnector import QConnector
 
 from fyle_pgevents.common.log import get_logger
 
@@ -77,10 +76,10 @@ class PGEventProducer(ABC):
         if pl['action'] in ['I', 'U', 'D']:
             table_name = f"{pl['schema']}.{pl['table']}"
 
-            event: PGPlatformEvent = self.event_cls()
+            event: BaseEvent = self.event_cls()
             event.load_wal2json_payload(msg.payload)
 
-            modified_event: PGPlatformEvent
+            modified_event: BaseEvent
             event_routing_key, modified_event = self.get_event_routing_key_and_event(table_name, event)
 
             # If no routing key is provided, then the event will not be queued
@@ -103,7 +102,7 @@ class PGEventProducer(ABC):
         self.__db_cur.consume_stream(consume=stream_consumer)
 
     @abstractmethod
-    def get_event_routing_key_and_event(self, table_name: str, event: PGPlatformEvent) -> (str, PGPlatformEvent):
+    def get_event_routing_key_and_event(self, table_name: str, event: BaseEvent) -> (str, BaseEvent):
         pass
 
     def publish(self, **kwargs):

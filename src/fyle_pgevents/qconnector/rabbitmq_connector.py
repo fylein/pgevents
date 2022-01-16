@@ -1,10 +1,7 @@
-import logging
-
 import pika
+from fyle_pgevents.qconnector import QConnector
 
-from fyle_pgevents.common.q_connector import QConnector
 from fyle_pgevents.common.compression import compress, decompress
-
 from fyle_pgevents.common.log import get_logger
 
 logger = get_logger(__name__)

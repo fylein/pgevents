@@ -1,4 +1,3 @@
-import logging
 from abc import ABC, abstractmethod
 
 from fyle_pgevents.common.log import get_logger

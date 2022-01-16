@@ -3,16 +3,16 @@ import os
 import signal
 
 import click
-from fyle_pgevents.common.event import PGPlatformEvent
+from fyle_pgevents.event import BaseEvent
 
-from fyle_pgevents.common.postgres_event_producer import PGEventProducer
-from fyle_pgevents.common.rabbitmq_connector import RabbitMQConnector
+from fyle_pgevents.qconnector import RabbitMQConnector
+from fyle_pgevents.producers import PGEventProducer
 
 logger = log.get_logger(__name__)
 
 
 class Producer(PGEventProducer):
-    def get_event_routing_key_and_event(self, table_name: str, event: PGPlatformEvent) -> (str, PGPlatformEvent):
+    def get_event_routing_key_and_event(self, table_name: str, event: BaseEvent) -> (str, BaseEvent):
         return table_name, event
 
 
@@ -29,7 +29,7 @@ class Producer(PGEventProducer):
 def producer(pg_host, pg_port, pg_database, pg_user, pg_password, pg_replication_slot, pg_tables, rabbitmq_url, rabbitmq_exchange):
     p = Producer(
         qconnector_cls=RabbitMQConnector,
-        event_cls=PGPlatformEvent,
+        event_cls=BaseEvent,
         pg_host=pg_host,
         pg_port=pg_port,
         pg_database=pg_database,

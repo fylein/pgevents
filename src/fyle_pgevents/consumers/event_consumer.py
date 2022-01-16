@@ -1,17 +1,21 @@
+import json
 from abc import ABC, abstractmethod
-from fyle_pgevents.common.q_connector import QConnector
+
+from fyle_pgevents.event import BaseEvent
+from fyle_pgevents.qconnector import QConnector
 
 
 class EventConsumer(ABC):
 
-    def __init__(self, *, qconnector_cls, **kwargs):
+    def __init__(self, *, qconnector_cls, event_cls, **kwargs):
         self.__shutdown = False
+        self.event_cls = event_cls
 
         self.qconnector_cls: Type[QConnector] = qconnector_cls
         self.qconnector: QConnector = qconnector_cls(**kwargs)
 
     @abstractmethod
-    def process_message(self, routing_key, payload):
+    def process_message(self, routing_key, event):
         pass
 
     def connect(self):
@@ -19,7 +23,12 @@ class EventConsumer(ABC):
 
     def start_consuming(self):
         def stream_consumer(routing_key, payload):
-            self.process_message(routing_key, payload)
+            payload_dict = json.loads(payload)
+
+            event: BaseEvent = self.event_cls()
+            event.from_dict(payload_dict)
+
+            self.process_message(routing_key, event)
             self.check_shutdown()
 
         self.qconnector.consume_stream(
