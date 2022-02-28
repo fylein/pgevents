@@ -3,26 +3,22 @@ FROM python:3.9-slim
 RUN apt-get update && \
     apt-get install -y libpq-dev gcc
 
-#################################################
-# Install requirements
-#################################################
+#================================================================
+# pip install required modules
+#================================================================
 
-COPY requirements.txt /tmp/requirements.txt
+RUN pip install --upgrade setuptools
+ADD requirements.txt /tmp/requirements.txt
 RUN pip install -r /tmp/requirements.txt
 
-#################################################
-# Copy over code
-#################################################
+#==================================================
+# Add the latest code
+#==================================================
 
-RUN mkdir -p /fyle_pgevents
+RUN mkdir -p /fyle-pgevents
+WORKDIR /fyle-pgevents
 
-WORKDIR /fyle_pgevents
+ADD . /fyle-pgevents
 
-COPY . /fyle_pgevents/
-
-RUN pylint --rcfile=.pylintrc common *.py
-
-RUN pip install .
-
-ENV PYTHONUNBUFFERED 1
+RUN pip install -e .
 CMD ["/bin/bash"]
