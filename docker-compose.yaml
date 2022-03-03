@@ -35,7 +35,7 @@ services:
       RABBITMQ_URL: amqp://admin:password@rabbitmq:5672/?heartbeat=0
       RABBITMQ_EXCHANGE: pgevents_exchange
       LOG_LEVEL: DEBUG
-    command: ["bash", "-c", "producer"]
+    command: ["bash", "-c", "sleep 3 && producer"]
     depends_on:
       - database
       - rabbitmq
