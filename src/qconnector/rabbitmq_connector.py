@@ -48,6 +48,22 @@ class RabbitMQConnector(QConnector):
         )
         self.__rmq_channel.start_consuming()
 
+    def consume_all(self):
+        routing_key_events = []
+
+        while True:
+            method, _, body = self.__rmq_channel.basic_get(
+                self.__queue_name, True
+            )
+            if method is None:
+                break
+
+            routing_key_events.append(
+                (method.routing_key, decompress(body))
+            )
+
+        return routing_key_events
+
     def connect(self):
         self.__rmq_conn = pika.BlockingConnection(
             parameters=pika.URLParameters(self.__rabbitmq_url)

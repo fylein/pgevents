@@ -25,6 +25,10 @@ class QConnector(ABC):
     def consume_stream(self, callback_fn):
         pass
 
+    @abstractmethod
+    def consume_all(self):
+        pass
+
     def shutdown(self):
         logger.warning('Shutdown has been requested')
         self.__shutdown = True
