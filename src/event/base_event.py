@@ -1,6 +1,5 @@
-from json import JSONDecodeError
 import json
-
+from json import JSONDecodeError
 from src.common.log import get_logger
 
 logger = get_logger(__name__)
@@ -101,6 +100,7 @@ class BaseEvent:
 
     @classmethod
     def skip_col(cls, table_name, col_name):
+        # pylint: disable=unused-argument
         return False
 
     @classmethod

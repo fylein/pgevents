@@ -1,5 +1,6 @@
 import json
 from abc import ABC, abstractmethod
+from typing import Type
 
 from src.event import BaseEvent
 from src.qconnector import QConnector

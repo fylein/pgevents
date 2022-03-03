@@ -23,8 +23,8 @@ class RabbitMQConnector(QConnector):
         if self.__rmq_conn:
             self.__rmq_conn.close()
 
-    def publish(self, routing_key, payload):
-        compressed_body = compress(payload)
+    def publish(self, routing_key, body):
+        compressed_body = compress(body)
         logger.info('sending message with routing_key %s compressed_body bytes %s ', routing_key, len(compressed_body))
         self.__rmq_channel.basic_publish(
             exchange=self.__rabbitmq_exchange,
@@ -35,6 +35,7 @@ class RabbitMQConnector(QConnector):
 
     def consume_stream(self, callback_fn):
         def stream_consumer(ch, method, properties, body):
+            # pylint: disable=unused-argument
             callback_fn(
                 routing_key=method.routing_key,
                 payload=decompress(body)

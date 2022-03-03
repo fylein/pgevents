@@ -3,8 +3,8 @@ import signal
 import click
 
 from src.common import log
+from src.qconnector.rabbitmq_connector import RabbitMQConnector
 from src.event import BaseEvent
-from src.qconnector import RabbitMQConnector
 from src.consumers import EventConsumer
 
 logger = log.get_logger(__name__)
@@ -13,9 +13,9 @@ logger = log.get_logger(__name__)
 class EventLogger(EventConsumer):
 
     def process_message(self, routing_key, event: BaseEvent):
-        logger.info('routing_key %s' % routing_key)
-        logger.info('event %s' % event)
-        logger.info('event %s' % event.to_dict())
+        logger.info('routing_key %s', routing_key)
+        logger.info('event %s', event)
+        logger.info('event %s', event.to_dict())
 
 
 @click.command()

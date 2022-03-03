@@ -9,6 +9,8 @@ logger = log.get_logger(__name__)
 class TestProducerEvent:
 
     def test_insert(self, db_conn, rmq_conn):
+        # pylint: disable=no-self-use
+
         with db_conn.cursor() as db_cursor:
             db_cursor.execute(
                 '''
@@ -40,6 +42,8 @@ class TestProducerEvent:
         assert event['new']['dob'] == '1995-02-02 00:00:00+00'
 
     def test_update(self, db_conn, rmq_conn):
+        # pylint: disable=no-self-use
+
         with db_conn.cursor() as db_cursor:
             db_cursor.execute(
                 '''

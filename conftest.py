@@ -16,7 +16,7 @@ def db_conn():
         host=os.environ['PGHOST'],
         port=os.environ['PGPORT'],
         dbname=os.environ['PGDATABASE']
-    )
+    )x
 
     yield db_connection
     db_connection.close()

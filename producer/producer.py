@@ -5,7 +5,7 @@ import click
 
 from src.common import log
 from src.event import BaseEvent
-from src.qconnector import RabbitMQConnector
+from src.qconnector.rabbitmq_connector import RabbitMQConnector
 from src.producers import PGEventProducer
 
 logger = log.get_logger(__name__)

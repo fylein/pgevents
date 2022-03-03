@@ -1,0 +1,35 @@
+name: test
+on:
+  schedule:
+    - cron: '30 10 * * *'
+  push:
+    branches: [ master ]
+  pull_request:
+    branches:
+      - '**'
+jobs:
+  pylint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: install dependencies
+        run: pip install pylint
+      - name: run pylint
+        run: pylint --rcfile=.pylintrc src producer consumer
+
+  pytest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: satackey/action-docker-layer-caching@v0.0.11
+        continue-on-error: true
+      - name: bring up services
+        run: |
+          docker-compose build
+          docker-compose up -d
+      - name: run pytest
+        run: |
+          set -o pipefail
+          docker-compose run --rm --entrypoint='bash -c "cd /fyle-pgevents && python -m pytest --cov=. --junit-xml=test_reports/report.xml --cov-report=term-missing"' producer | tee pytest_coverage.txt
+      - name: bring down the services
+        run: docker-compose -f docker-compose.yaml down

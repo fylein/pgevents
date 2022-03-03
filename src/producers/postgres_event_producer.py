@@ -1,13 +1,13 @@
 import json
+from typing import Type
 from abc import ABC, abstractmethod
-from typing import Union
-
 import psycopg2
+
+
 from psycopg2.extras import LogicalReplicationConnection
 
 from src.event import BaseEvent
 from src.qconnector import QConnector
-
 from src.common.log import get_logger
 
 logger = get_logger(__name__)
@@ -21,8 +21,8 @@ class PGEventProducer(ABC):
         self.__shutdown = False
         self.event_cls = event_cls
 
-        self.__db_conn: Union[psycopg2.connection, None] = None
-        self.__db_cur: Union[psycopg2.cursor, None] = None
+        self.__db_conn = None
+        self.__db_cur = None
 
         self.__pg_tables = pg_tables
         self.__pg_replication_slot = pg_replication_slot
