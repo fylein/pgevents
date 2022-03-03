@@ -3,7 +3,7 @@ on:
   schedule:
     - cron: '30 10 * * *'
   push:
-    branches: [ master ]
+    branches: [ master, action_* ]
   pull_request:
     branches:
       - '**'
