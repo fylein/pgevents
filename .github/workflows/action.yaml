@@ -30,6 +30,6 @@ jobs:
       - name: run pytest
         run: |
           set -o pipefail
-          docker-compose run --rm --entrypoint='bash -c "cd /fyle-pgevents && python -m pytest --cov=. --junit-xml=test_reports/report.xml --cov-report=term-missing"' producer | tee pytest_coverage.txt
+          docker-compose run --rm --entrypoint='bash -c "cd /fyle-pgevents && python -m pytest"' producer | tee pytest_coverage.txt
       - name: bring down the services
         run: docker-compose -f docker-compose.yaml down
