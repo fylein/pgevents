@@ -15,7 +15,7 @@ class TestProducerEvent:
                     insert into users(id, full_name, dob, email, is_email_verified)
                     values (%s,%s,%s,%s,%s)
                 ''', (
-                    'user1', 'user_fullname1', '1995-02-02', 'user1@fyle.in', False
+                    'user1', 'user_fullname1', '1995-02-02', 'user1@someorg.in', False
                 )
             )
         db_conn.commit()
@@ -35,7 +35,7 @@ class TestProducerEvent:
         assert event['id'] == 'user1'
         assert event['new']['id'] == 'user1'
         assert event['new']['full_name'] == 'user_fullname1'
-        assert event['new']['email'] == 'user1@fyle.in'
+        assert event['new']['email'] == 'user1@someorg.in'
         assert event['new']['is_email_verified'] is False
         assert event['new']['dob'] == '1995-02-02 00:00:00+00'
 
@@ -64,7 +64,7 @@ class TestProducerEvent:
         assert event['action'] == 'U'
 
         assert event['old']['full_name'] == 'user_fullname1'
-        assert event['old']['email'] == 'user1@fyle.in'
+        assert event['old']['email'] == 'user1@someorg.in'
         assert event['old']['is_email_verified'] is False
         assert event['old']['dob'] == '1995-02-02 00:00:00+00'
 
@@ -72,6 +72,6 @@ class TestProducerEvent:
         assert event['diff']['full_name'] == 'user_fullname_updated1'
 
         assert event['new']['full_name'] == 'user_fullname_updated1'
-        assert event['new']['email'] == 'user1@fyle.in'
+        assert event['new']['email'] == 'user1@someorg.in'
         assert event['new']['is_email_verified'] is True
         assert event['new']['dob'] == '1995-02-02 00:00:00+00'

@@ -15,10 +15,10 @@ RUN pip install -r /tmp/requirements.txt
 # Add the latest code
 #==================================================
 
-RUN mkdir -p /fyle-pgevents
-WORKDIR /fyle-pgevents
+RUN mkdir -p /pgevents
+WORKDIR /pgevents
 
-ADD . /fyle-pgevents
+ADD . /pgevents
 
 RUN pip install -e .
 CMD ["/bin/bash"]

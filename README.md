@@ -1,4 +1,4 @@
-# fyle-pgevents
+# pgevents
 
 Utility to generate events from PG using logical replication and push it to Rabbitmq.
 
@@ -7,7 +7,7 @@ Utility to generate events from PG using logical replication and push it to Rabb
 Easiest way is to use docker.
 
 ```
-docker build -t fyle_pgevents .
+docker build -t pgevents .
 ```
 
 # Pre-requisites
@@ -44,18 +44,19 @@ Note that if you're running on Docker on Mac and want to connect to host machine
 
 To read from PostgreSQL and send data to rabbitmq
 ```
-docker run -i -e PGHOST -e PGPORT -e PGDATABASE -e PGUSER -e PGPASSWORD -e PGSLOT -e RABBITMQ_URL -e RABBITMQ_EXCHANGE --rm fyle_pgevents producer
+docker run -i -e PGHOST -e PGPORT -e PGDATABASE -e PGUSER -e PGPASSWORD -e PGSLOT -e RABBITMQ_URL -e RABBITMQ_EXCHANGE --rm pgevents producer
+docker run -i -e PGHOST -e PGPORT -e PGDATABASE -e PGUSER -e PGPASSWORD -e PGSLOT -e RABBITMQ_URL -e RABBITMQ_EXCHANGE --rm pgevents producer
 ```
 
 To read data from rabbitmq exchange and print it to stdout
 ```
-docker run -i -e RABBITMQ_URL -e RABBITMQ_EXCHANGE -e RABBITMQ_QUEUE_NAME --rm fyle_pgevents consumer_debug
+docker run -i -e RABBITMQ_URL -e RABBITMQ_EXCHANGE -e RABBITMQ_QUEUE_NAME --rm pgevents consumer_debug
 ```
 
 For detailed information, use the help flag
 
 ```
-$ docker run -i -e PGHOST -e PGPORT -e PGDATABASE -e PGUSER -e PGPASSWORD -e PGSLOT --rm fyle_pgevents producer --help
+$ docker run -i -e PGHOST -e PGPORT -e PGDATABASE -e PGUSER -e PGPASSWORD -e PGSLOT --rm pgevents producer --help
 Usage: producer [OPTIONS]
 
 Options:
@@ -79,7 +80,7 @@ Options:
 Map the volume to the docker container and run the utility from within the container while you're making changes in the editor:
 
 ```
-docker run -it -e PGHOST -e PGPORT -e PGDATABASE -e PGUSER -e PGPASSWORD -e PGSLOT -e PGTABLES -e RABBITMQ_URL -e RABBITMQ_EXCHANGE -e RABBITMQ_QUEUE_NAME --rm -v $(pwd):/fyle_pgevents --entrypoint=/bin/bash fyle_pgevents
+docker run -it -e PGHOST -e PGPORT -e PGDATABASE -e PGUSER -e PGPASSWORD -e PGSLOT -e PGTABLES -e RABBITMQ_URL -e RABBITMQ_EXCHANGE -e RABBITMQ_QUEUE_NAME --rm -v $(pwd):/pgevents --entrypoint=/bin/bash pgevents
 ```
 
 Now make changes to the python files. Then run the command from shell:
