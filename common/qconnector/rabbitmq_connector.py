@@ -1,8 +1,8 @@
 import pika
-from src.qconnector import QConnector
+from common.qconnector import QConnector
 
-from src.common.compression import compress, decompress
-from src.common.log import get_logger
+from common.compression import compress, decompress
+from common.log import get_logger
 
 logger = get_logger(__name__)
 

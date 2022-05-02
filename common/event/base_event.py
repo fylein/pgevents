@@ -1,7 +1,7 @@
 from json import JSONDecodeError
 import json
 
-from src.common.log import get_logger
+from common.log import get_logger
 
 logger = get_logger(__name__)
 

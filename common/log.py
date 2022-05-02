@@ -1,7 +1,7 @@
 import logging
 import os
 
-LOG_LEVEL = os.environ.get('LOG_LEVEL')
+LOG_LEVEL = os.environ.get('LOG_LEVEL', 'INFO')
 
 
 def get_logger(name):

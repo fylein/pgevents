@@ -2,8 +2,8 @@ import os
 import psycopg2
 import pytest
 
-from src.qconnector.rabbitmq_connector import RabbitMQConnector
-from src.common import log
+from common.qconnector import RabbitMQConnector
+from common import log
 
 logger = log.get_logger(__name__)
 

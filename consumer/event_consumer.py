@@ -1,8 +1,12 @@
 import json
-from abc import ABC, abstractmethod
+from abc import ABC
 
-from src.event import BaseEvent
-from src.qconnector import QConnector
+from common.event import BaseEvent
+from common.qconnector import QConnector
+from common import log
+
+
+logger = log.get_logger(__name__)
 
 
 class EventConsumer(ABC):
@@ -14,9 +18,10 @@ class EventConsumer(ABC):
         self.qconnector_cls: Type[QConnector] = qconnector_cls
         self.qconnector: QConnector = qconnector_cls(**kwargs)
 
-    @abstractmethod
-    def process_message(self, routing_key, event):
-        pass
+    def process_message(self, routing_key, event: BaseEvent):
+        logger.info('routing_key %s' % routing_key)
+        logger.info('event %s' % event)
+        logger.info('event %s' % event.to_dict())
 
     def connect(self):
         self.qconnector.connect()

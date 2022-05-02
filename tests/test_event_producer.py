@@ -1,12 +1,12 @@
 import json
 from time import sleep
-from src.common import log
+from common import log
 
 
 logger = log.get_logger(__name__)
 
 
-class TestProducerEvent:
+class TestEventProducer:
 
     def test_insert(self, db_conn, rmq_conn):
         with db_conn.cursor() as db_cursor:

@@ -1,19 +1,19 @@
 import json
-from abc import ABC, abstractmethod
+from abc import ABC
 from typing import Union
 
 import psycopg2
 from psycopg2.extras import LogicalReplicationConnection
 
-from src.event import BaseEvent
-from src.qconnector import QConnector
+from common.event import BaseEvent
+from common.qconnector import QConnector
 
-from src.common.log import get_logger
+from common.log import get_logger
 
 logger = get_logger(__name__)
 
 
-class PGEventProducer(ABC):
+class EventProducer(ABC):
 
     def __init__(self, *, qconnector_cls, event_cls, pg_host, pg_port, pg_database, pg_user, pg_password,
                  pg_tables, pg_replication_slot, **kwargs):
@@ -101,9 +101,8 @@ class PGEventProducer(ABC):
 
         self.__db_cur.consume_stream(consume=stream_consumer)
 
-    @abstractmethod
     def get_event_routing_key_and_event(self, table_name: str, event: BaseEvent) -> (str, BaseEvent):
-        pass
+        return table_name, event
 
     def publish(self, **kwargs):
         self.qconnector.publish(**kwargs)

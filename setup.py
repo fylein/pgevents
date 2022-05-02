@@ -8,7 +8,7 @@ setup(
     ),
     entry_points='''
         [console_scripts]
-        producer=producer.producer:producer
-        event_logger=consumer.event_logger:log_event
+        producer=producer.main:produce
+        event_logger=consumer.main:consume
     '''
 )

@@ -2,20 +2,12 @@ import os
 import signal
 import click
 
-from src.common import log
-from src.event import BaseEvent
-from src.qconnector import RabbitMQConnector
-from src.consumers import EventConsumer
+from common import log
+from common.event import BaseEvent
+from common.qconnector import RabbitMQConnector
+from consumer.event_consumer import EventConsumer
 
 logger = log.get_logger(__name__)
-
-
-class EventLogger(EventConsumer):
-
-    def process_message(self, routing_key, event: BaseEvent):
-        logger.info('routing_key %s' % routing_key)
-        logger.info('event %s' % event)
-        logger.info('event %s' % event.to_dict())
 
 
 @click.command()
@@ -23,8 +15,8 @@ class EventLogger(EventConsumer):
 @click.option('--rabbitmq-exchange', default=lambda: os.environ.get('RABBITMQ_EXCHANGE', None), required=True, help='RabbitMQ exchange ($RABBITMQ_EXCHANGE)')
 @click.option('--binding-keys', default=lambda: os.environ.get('RABBITMQ_BINDING_KEYS', '#'), required=True, help='RabbitMQ binding keys ($RABBITMQ_BINDING_KEYS, "#")')
 @click.option('--queue-name', default=lambda: os.environ.get('RABBITMQ_QUEUE_NAME', ''), required=True, help='RabbitMQ queue name ($RABBITMQ_QUEUE_NAME, "")')
-def log_event(rabbitmq_url, rabbitmq_exchange, binding_keys, queue_name):
-    event_logger = EventLogger(
+def consume(rabbitmq_url, rabbitmq_exchange, binding_keys, queue_name):
+    event_logger = EventConsumer(
         qconnector_cls=RabbitMQConnector,
         event_cls=BaseEvent,
         rabbitmq_url=rabbitmq_url,

@@ -10,6 +10,20 @@ Easiest way is to use docker.
 docker build -t pgevents .
 ```
 
+
+# Test
+
+Run the following commands:
+
+```
+    # Start producer, database and rabbitmq
+    docker-compose up --build
+
+    # In a new terminal run the tests now
+    docker-compose run --rm --entrypoint='bash -c "cd /pgevents && python -m pytest -vvv "' producer
+```
+
+
 # Pre-requisites
 
 To get the logical decoding working correctly, you'll need to run set replica identity to full for the tables in question. Example:
