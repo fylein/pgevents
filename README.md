@@ -127,22 +127,25 @@ export RABBITMQ_QUEUE_NAME=audit
 
 ```
 
-To start the PGEvents producer process, run it like this:
+Now run the PGEvents producer process using the published docker image like this:
 ```
-docker build -t pgevents .
-docker run -i -e PGHOST -e PGPORT -e PGDATABASE -e PGUSER -e PGPASSWORD -e PGSLOT -e RABBITMQ_URL -e RABBITMQ_EXCHANGE --rm pgevents producer
-docker run -i -e PGHOST -e PGPORT -e PGDATABASE -e PGUSER -e PGPASSWORD -e PGSLOT -e RABBITMQ_URL -e RABBITMQ_EXCHANGE --rm pgevents producer
+docker run -i -e PGHOST -e PGPORT -e PGDATABASE -e PGUSER -e PGPASSWORD -e PGSLOT -e RABBITMQ_URL -e RABBITMQ_EXCHANGE --rm \
+  fylehq/pgevents producer
+
 ```
 
 To read data from rabbitmq exchange and print it to stdout
 ```
-docker run -i -e RABBITMQ_URL -e RABBITMQ_EXCHANGE -e RABBITMQ_QUEUE_NAME --rm pgevents consumer_debug
+docker run -i -e RABBITMQ_URL -e RABBITMQ_EXCHANGE -e RABBITMQ_QUEUE_NAME --rm \
+  fylehq/pgevents consumer_debug
 ```
 
 For detailed information, use the help flag
 
 ```
-$ docker run -i -e PGHOST -e PGPORT -e PGDATABASE -e PGUSER -e PGPASSWORD -e PGSLOT --rm pgevents producer --help
+$ docker run -i -e PGHOST -e PGPORT -e PGDATABASE -e PGUSER -e PGPASSWORD -e PGSLOT --rm \
+  fylehq/pgevents producer --help
+
 Usage: producer [OPTIONS]
 
 Options:
@@ -163,7 +166,14 @@ Options:
 
 ## Running in Production
 
-We will be publishing a docker image of PGEvents shortly and updating steps
+To run PGEvents in production, you can simply use the published docker image that is available at:
+
+```
+  docker.io/fylehq/pgevents:latest
+```
+
+Be sure to pass all the environment variables highlighted in the section above so that the producer knows how to
+connect to your Postgres DB and RabbitMQ. 
 
 ## Run Tests
 
