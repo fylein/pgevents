@@ -47,7 +47,7 @@ You'll see a message in RabbitMQ exchange like this with routing key `public.use
 
 You can now run async code that works off this event. E.g. sending an email to a newly signed up user. The possibilities are endless.
 
-![pgevents.png](./docs/assets/pgevents.jpg)
+![pgevents.png](./docs/assets/pgevents.png)
 
 You can read more about how logical replication is being used to raise events [here](https://saasengineering.substack.com/p/change-events-from-postgresql-tables?s=r) 
 
