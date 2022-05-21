@@ -1,8 +1,37 @@
 # PGEvents
 
-Utility to generate events from Postgres using logical replication and push it to Rabbitmq.
+## Introduction
 
-Read more about how logical replication is being used to raise events [here](https://saasengineering.substack.com/p/change-events-from-postgresql-tables?s=r) 
+This is a utility to generate table events from Postgres using logical replication and push it to Rabbitmq.
+
+What are you dithering about, you ask?
+
+Imagine you have a table in Postgres DB. You perform some inserts, updates or deletes - either via an application or maybe via SQL scripts.
+This utility will stream a set of logical Insert, Update or Delete events and put them in a Rabbitmq exchange.
+
+For example, if you have a table like this:
+
+```
+create table users (
+    id int primary key,
+    full_name text not null
+);
+```
+
+If you run the following SQL,
+
+```
+  insert into users(id, full_name) values (1, 'Mikael Åkerfeldt');
+```
+
+You'll see a message in RabbitMQ exchange like this with routing key `public.users`:
+```
+  {'table_name': 'public.users', 'old': {}, 'new': {'id': 1, 'full_name': 'Mikael Åkerfeldt'}, 'id': 1, 'diff': {'id': 1, 'full_name': 'Mikael Åkerfeldt'}, 'action': 'I'}
+```
+
+You can now run async code that works off this event. E.g. sending an email to a newly signed up user. The possibilities are endless.
+
+You can read more about how logical replication is being used to raise events [here](https://saasengineering.substack.com/p/change-events-from-postgresql-tables?s=r) 
 ![pgevents.jpg](./docs/assets/block_d.jpg)
 
 
