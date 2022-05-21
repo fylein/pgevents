@@ -1,7 +1,7 @@
 # PGEvents
 
 *Note: This project is not ready for production yet, but it will be very soon. If you're interested in contributing,
-send us a note at siva@fylehq.com*
+send us a note at pgevents@fylehq.com*
 
 ## Introduction
 
@@ -179,7 +179,7 @@ Run the following commands:
 
 ## Contributing
 
-If you're interested in contributing to this project, do send us a note at siva@fylehq.com
+If you're interested in contributing to this project, do send us a note at pgevents@fylehq.com
 
 <!-- 
 ### Local Setup
