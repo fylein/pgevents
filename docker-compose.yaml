@@ -1,14 +1,15 @@
 version: '3.8'
 services:
   rabbitmq:
-    build: dev/rabbitmq
-    restart: unless-stopped
+    image: rabbitmq:3.8.9-management-alpine
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=password
     ports:
-      - "5672:5672"
-      - "15672:15672"
+      - '5672:5672'
+      - '15672:15672'
     volumes:
       - rabbitmq-data:/data/
-    entrypoint: bash -c "rabbitmq-server"
   database:
     build: dev/postgres
     restart: unless-stopped

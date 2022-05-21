@@ -1,6 +1,10 @@
-# pgevents
+# PGEvents
 
-Utility to generate events from PG using logical replication and push it to Rabbitmq.
+Utility to generate events from Postgres using logical replication and push it to Rabbitmq.
+
+Read more about how logical replication is being used to raise events [here](https://saasengineering.substack.com/p/change-events-from-postgresql-tables?s=r) 
+![pgevents.jpg](./docs/assets/block_d.jpg)
+
 
 # Build
 
@@ -11,7 +15,7 @@ docker build -t pgevents .
 ```
 
 
-# Test
+# Run Tests
 
 Run the following commands:
 
