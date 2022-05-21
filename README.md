@@ -29,7 +29,20 @@ If you run the following SQL,
 
 You'll see a message in RabbitMQ exchange like this with routing key `public.users`:
 ```
-  {'table_name': 'public.users', 'old': {}, 'new': {'id': 1, 'full_name': 'Mikael Åkerfeldt'}, 'id': 1, 'diff': {'id': 1, 'full_name': 'Mikael Åkerfeldt'}, 'action': 'I'}
+  {
+    "table_name": "public.users",
+    "old": {},
+    "new": {
+      "id": 1,
+      "full_name": "Mikael Åkerfeldt"
+    },
+    "id": 1,
+    "diff": {
+      "id": 1,
+      "full_name": "Mikael Åkerfeldt"
+    },
+    "action": "I"
+  }
 ```
 
 You can now run async code that works off this event. E.g. sending an email to a newly signed up user. The possibilities are endless.
