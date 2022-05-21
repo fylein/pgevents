@@ -69,15 +69,6 @@ Now, open up a terminal and connect to the DB using the following command:
 Now execute the following SQL:
 
 ```
-  select pg_create_logical_replication_slot('pgevents', 'wal2json');
-
-  create table users (
-    id int primary key,
-    full_name text not null
-  );
-
-  alter table users replica identity full;
-
   insert into users(id, full_name) values (1, 'Mikael Åkerfeldt');
 ```
 
@@ -183,7 +174,7 @@ Run the following commands:
     docker-compose up --build
 
     # In a new terminal run the tests now
-    docker-compose run --rm --entrypoint='bash -c "cd /pgevents && python -m pytest -vvv "' producer
+    docker-compose run --rm --entrypoint='python -m pytest -vvv' producer
 ```
 
 ## Contributing
