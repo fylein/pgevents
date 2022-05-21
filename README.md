@@ -108,7 +108,7 @@ alter table users replica identity full;
 
 If you don't do this, the old value will not be sent during updates and deletes and the diffs may be incorrect.
 
-### Run pgevents locally
+### Run PGEvents locally
 
 Set the following environment variables to connect to PostgreSQL >= 10 and to RabbitMQ as broker
 
@@ -127,7 +127,7 @@ export RABBITMQ_QUEUE_NAME=audit
 
 ```
 
-To start the pgevents producer process, run it like this:
+To start the PGEvents producer process, run it like this:
 ```
 docker build -t pgevents .
 docker run -i -e PGHOST -e PGPORT -e PGDATABASE -e PGUSER -e PGPASSWORD -e PGSLOT -e RABBITMQ_URL -e RABBITMQ_EXCHANGE --rm pgevents producer
@@ -163,7 +163,7 @@ Options:
 
 ## Running in Production
 
-We will be publishing a docker image of pgevents shortly and updating steps
+We will be publishing a docker image of PGEvents shortly and updating steps
 
 ## Run Tests
 
