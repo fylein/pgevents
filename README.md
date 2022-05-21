@@ -173,6 +173,10 @@ Run the following commands:
     docker-compose run --rm --entrypoint='bash -c "cd /pgevents && python -m pytest -vvv "' producer
 ```
 
+## Contributing
+
+If you're interested in contributing to this project, do send us a note at siva@fylehq.com
+
 <!-- 
 ### Local Setup
 
