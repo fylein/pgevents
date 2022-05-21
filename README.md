@@ -47,6 +47,8 @@ You'll see a message in RabbitMQ exchange like this with routing key `public.use
 
 You can now run async code that works off this event. E.g. sending an email to a newly signed up user. The possibilities are endless.
 
+![pgevents.png](./docs/assets/pgevents.jpg)
+
 You can read more about how logical replication is being used to raise events [here](https://saasengineering.substack.com/p/change-events-from-postgresql-tables?s=r) 
 
 ## Try it out in 5 mins
@@ -80,8 +82,6 @@ Now go to the terminal where `docker compose` is running and you'll see the foll
   event_logger_1  | event {'table_name': 'public.users', 'old': {}, 'new': {'id': 1, 'full_name': 'Mikael Åkerfeldt'}, 'id': 1, 'diff': {'id': 1, 'full_name': 'Mikael Åkerfeldt'}, 'action': 'I'}
 
 ```
-
-<!-- ![pgevents.jpg](./docs/assets/block_d.jpg) -->
 
 ## Testing against your own DB
 
