@@ -32,6 +32,7 @@ services:
       PGUSER: postgres
       PGPASSWORD: postgres
       PGREPLICATIONSLOT: pgevents
+      PGOUTPUTPLUGIN: wal2json
       PGTABLES: public.users
       RABBITMQ_URL: amqp://admin:password@rabbitmq:5672/?heartbeat=0
       RABBITMQ_EXCHANGE: pgevents_exchange

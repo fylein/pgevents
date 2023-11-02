@@ -4,3 +4,5 @@ create table users (
 );
 
 alter table users replica identity full;
+
+create publication events for all tables;
