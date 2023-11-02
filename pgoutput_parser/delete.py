@@ -22,7 +22,10 @@ class DeleteMessage(BaseMessage):
             logging.debug(f'Old tuple: {old_tuple}')
 
             return {
-                'message_type': message_type,
-                'relation_id': relation_id,
-                'old': old_tuple_values
+                'table_name': self.table_name,
+                'action': message_type,
+                'old': old_tuple_values,
+                'id': old_tuple_values['id'],
+                'new': {},
+                'diff': {}
             }

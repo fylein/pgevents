@@ -35,11 +35,14 @@ class RabbitMQConnector(QConnector):
             properties=pika.BasicProperties(delivery_mode=2)  # persistent delivery mode
         )
 
-    def consume_stream(self, callback_fn):
+    def consume_stream(self, callback_fn, decompress_message=True):
         def stream_consumer(ch, method, properties, body):
+            if decompress_message:
+                body = decompress(body)
+
             callback_fn(
                 routing_key=method.routing_key,
-                payload=decompress(body)
+                payload=body
             )
             self.check_shutdown()
 

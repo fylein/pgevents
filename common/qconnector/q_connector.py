@@ -22,7 +22,7 @@ class QConnector(ABC):
         pass
 
     @abstractmethod
-    def consume_stream(self, callback_fn):
+    def consume_stream(self, callback_fn, **kwargs):
         pass
 
     @abstractmethod

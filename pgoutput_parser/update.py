@@ -49,9 +49,10 @@ class UpdateMessage(BaseMessage):
             logging.debug(f'New tuple values: {new_tuple_values}')
 
             return {
-                'message_type': message_type,
-                'relation_id': relation_id,
+                'table_name': self.table_name,
+                'id': new_tuple_values['id'],
                 'old': old_tuple_values,
                 'new': new_tuple_values,
-                'diff': self.calculate_diff(old_tuple_values, new_tuple_values)
+                'diff': self.calculate_diff(old_tuple_values, new_tuple_values),
+                'action': self.message_type
             }

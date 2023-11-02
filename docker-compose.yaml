@@ -31,8 +31,8 @@ services:
       PGDATABASE: dummy
       PGUSER: postgres
       PGPASSWORD: postgres
-      PGREPLICATIONSLOT: pgevents
-      PGOUTPUTPLUGIN: wal2json
+      PGREPLICATIONSLOT: pgevents_slot
+      PGOUTPUTPLUGIN: pgoutput
       PGTABLES: public.users
       RABBITMQ_URL: amqp://admin:password@rabbitmq:5672/?heartbeat=0
       RABBITMQ_EXCHANGE: pgevents_exchange
@@ -47,6 +47,12 @@ services:
     build: .
     restart: unless-stopped
     environment:
+      PGHOST: database
+      PGPORT: 5432
+      PGDATABASE: dummy
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGOUTPUTPLUGIN: pgoutput
       RABBITMQ_URL: amqp://admin:password@rabbitmq:5672/?heartbeat=0
       RABBITMQ_EXCHANGE: pgevents_exchange
       LOG_LEVEL: DEBUG

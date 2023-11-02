@@ -23,7 +23,10 @@ class InsertMessage(BaseMessage):
             logging.debug(f'New tuple values: {new_tuple_values}')
 
             return {
-                'message_type': message_type,
-                'relation_id': relation_id,
-                'new': new_tuple_values
+                'table_name': self.table_name,
+                'new': new_tuple_values,
+                'id': new_tuple_values['id'],
+                'old': {},
+                'diff': {},
+                'action': self.message_type
             }

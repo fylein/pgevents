@@ -6,14 +6,16 @@ from common.utils import Utils
 class BaseMessage:
     """Base class for decoding PostgreSQL logical replication messages."""
 
-    def __init__(self, message: bytes, cursor) -> None:
+    def __init__(self, table_name: str, message: bytes, cursor) -> None:
         """
         Initialize the BaseMessage instance.
 
+        :param table_name: The name of the table being replicated.
         :param message: The raw message payload from the replication stream.
         :param cursor: A psycopg2 cursor object for database operations.
         """
         self.message = message
+        self.table_name = table_name
         self.buffer = io.BytesIO(message)
         self.message_type = self.read_string(length=1)
         self.relation_id = self.read_int32()
