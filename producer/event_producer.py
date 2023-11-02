@@ -1,6 +1,6 @@
 import json
 from abc import ABC
-from typing import Union
+from typing import Type, Union
 
 import psycopg2
 from psycopg2.extras import LogicalReplicationConnection
@@ -16,7 +16,7 @@ logger = get_logger(__name__)
 class EventProducer(ABC):
 
     def __init__(self, *, qconnector_cls, event_cls, pg_host, pg_port, pg_database, pg_user, pg_password,
-                 pg_tables, pg_replication_slot, **kwargs):
+                 pg_tables, pg_replication_slot, pg_output_plugin, **kwargs):
 
         self.__shutdown = False
         self.event_cls = event_cls
@@ -32,6 +32,7 @@ class EventProducer(ABC):
         self.__pg_database = pg_database
         self.__pg_user = pg_user
         self.__pg_password = pg_password
+        self.__pg_output_plugin = pg_output_plugin
         self.__pg_connection_factory = LogicalReplicationConnection
 
         self.qconnector_cls: Type[QConnector] = qconnector_cls
@@ -57,6 +58,9 @@ class EventProducer(ABC):
         if self.__pg_tables and len(self.__pg_tables) > 0:
             options['add-tables'] = self.__pg_tables
 
+        logger.info('Creating Replication Slot if not exists...')
+        self.__create_replication_slot()
+
         logger.debug('options for slot %s', options)
         self.__db_cur.start_replication(
             slot_name=self.__pg_replication_slot,
@@ -69,6 +73,26 @@ class EventProducer(ABC):
 
         logger.info('Connecting to postgres...')
         self.__connect_db()
+
+    def __create_replication_slot(self) -> None:
+        """
+        Create a new logical replication slot.
+
+        Args:
+            slot_name (str): The name of the replication slot to create.
+        """
+        try:
+            cursor = self.__db_cur
+            cursor.execute(
+                "select pg_create_logical_replication_slot(%s, %s);",
+                (self.__pg_replication_slot, self.__pg_output_plugin)
+            )
+            logger.debug('Replication slot created')
+        except psycopg2.errors.DuplicateObject:
+            logger.debug('Replication slot already exists')
+        except psycopg2.errors.OperationalError:
+            logger.exception("Operational error during initialization.")
+            raise psycopg2.errors.OperationalError("Operational error during initialization.")
 
     def msg_processor(self, msg):
         pl = json.loads(msg.payload)
