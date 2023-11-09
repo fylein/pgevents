@@ -2,6 +2,8 @@ import json
 from abc import ABC
 from typing import Type, Union
 
+from functools import lru_cache
+
 import psycopg2
 from psycopg2 import pool
 from psycopg2.extras import LogicalReplicationConnection
@@ -11,7 +13,7 @@ from common.qconnector import QConnector
 
 from common.log import get_logger
 
-from common.utils import Utils as parser_utils
+from common.utils import DeserializerUtils as parser_utils
 
 
 logger = get_logger(__name__)
@@ -39,6 +41,8 @@ class EventProducer(ABC):
         self.__pg_password = pg_password
         self.__pg_output_plugin = pg_output_plugin
         self.__pg_connection_factory = LogicalReplicationConnection
+
+        kwargs['use_compression'] = True if self.__pg_output_plugin == 'wal2json' else False
 
         self.qconnector_cls: Type[QConnector] = qconnector_cls
         self.qconnector: QConnector = qconnector_cls(**kwargs)
@@ -136,6 +140,7 @@ class EventProducer(ABC):
         msg.cursor.send_feedback(flush_lsn=msg.data_start)
         self.check_shutdown()
 
+    @lru_cache(maxsize=128)
     def __get_table_name(self, relation_id: int) -> str:
         """
         Get the table name using the relation ID.
@@ -147,6 +152,7 @@ class EventProducer(ABC):
             str: Full table name including schema.
         """
         try:
+            logger.debug('Getting table name for relation ID: %s', relation_id)
             self.__db_cur.execute(
                 "select schemaname, relname from pg_stat_user_tables where relid = %s;",
                 (relation_id,)
@@ -158,7 +164,6 @@ class EventProducer(ABC):
             raise
 
     def pgoutput_msg_processor(self, msg):
-        logger.info(msg)
         message_type = msg.payload[:1].decode('utf-8')
 
         # Convert bytes to int
@@ -168,17 +173,16 @@ class EventProducer(ABC):
             operation_type = 'INSERT' if message_type == 'I' else 'UPDATE' if message_type == 'U' else 'DELETE'
             table_name = self.__get_table_name(relation_id)
 
-            logger.info(f'{operation_type} Change occurred on table: {table_name}')
-            logger.info(f'{operation_type} Change occurred at LSN: {msg.data_start}')
+            logger.debug(f'{operation_type} Change occurred on table: {table_name}')
+            logger.debug(f'{operation_type} Change occurred at LSN: {msg.data_start}')
 
             self.publish(
                 routing_key=table_name,
-                payload=msg.payload,
-                compress_message=False
+                payload=msg.payload
             )
 
-            logger.info(f'{operation_type} Change processed on table: {table_name}')
-            logger.info(f'{operation_type} Change processed at LSN: {msg.data_start}')
+            logger.debug(f'{operation_type} Change processed on table: {table_name}')
+            logger.debug(f'{operation_type} Change processed at LSN: {msg.data_start}')
 
         msg.cursor.send_feedback(flush_lsn=msg.data_start)
         self.check_shutdown()

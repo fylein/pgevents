@@ -1,7 +1,7 @@
 from typing import Union
 
 
-class Utils:
+class DeserializerUtils:
     @staticmethod
     def convert_bytes_to_int(in_bytes: bytes) -> int:
         return int.from_bytes(in_bytes, byteorder='big', signed=True)
