@@ -1,6 +1,6 @@
 import io
 import logging
-from common.utils import Utils
+from common.utils import DeserializerUtils
 
 
 class BaseMessage:
@@ -24,15 +24,15 @@ class BaseMessage:
 
     def read_int16(self) -> int:
         """Read a 16-bit integer from the buffer."""
-        return Utils.convert_bytes_to_int(self.buffer.read(2))
+        return DeserializerUtils.convert_bytes_to_int(self.buffer.read(2))
 
     def read_int32(self) -> int:
         """Read a 32-bit integer from the buffer."""
-        return Utils.convert_bytes_to_int(self.buffer.read(4))
+        return DeserializerUtils.convert_bytes_to_int(self.buffer.read(4))
 
     def read_string(self, length: int) -> str:
         """Read a string of a given length from the buffer."""
-        return Utils.convert_bytes_to_utf8(self.buffer.read(length))
+        return DeserializerUtils.convert_bytes_to_utf8(self.buffer.read(length))
 
     def decode_tuple(self) -> dict:
         """

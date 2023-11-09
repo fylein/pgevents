@@ -37,9 +37,9 @@ class RabbitMQConnector(QConnector):
             properties=pika.BasicProperties(delivery_mode=2)  # persistent delivery mode
         )
 
-    def consume_stream(self, callback_fn, decompress_message=True):
+    def consume_stream(self, callback_fn):
         def stream_consumer(ch, method, properties, body):
-            if decompress_message:
+            if self.use_compression:
                 body = decompress(body)
 
             callback_fn(

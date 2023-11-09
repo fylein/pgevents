@@ -33,6 +33,8 @@ class EventConsumer(ABC):
         self.__pg_output_plugin = pg_output_plugin
         self.__dbconn: Union[psycopg2.connection, None] = None
 
+        kwargs['use_compression'] = True if self.__pg_output_plugin == 'wal2json' else False
+
         self.qconnector_cls: Type[QConnector] = qconnector_cls
         self.qconnector: QConnector = qconnector_cls(**kwargs)
 
@@ -91,14 +93,8 @@ class EventConsumer(ABC):
             self.process_message(routing_key, event)
             self.check_shutdown()
 
-        decompress_message = False
-
-        if self.__pg_output_plugin == 'wal2json':
-            decompress_message = True
-
         self.qconnector.consume_stream(
-            callback_fn=stream_consumer,
-            decompress_message=decompress_message
+            callback_fn=stream_consumer
         )
 
     def shutdown(self):
