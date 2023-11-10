@@ -16,7 +16,6 @@ class RabbitMQConnector(QConnector):
         self.__rmq_channel = None
         self.__queue_name = queue_name
         self.__binding_keys = binding_keys
-        self.use_compression = use_compression
 
         super().__init__()
 

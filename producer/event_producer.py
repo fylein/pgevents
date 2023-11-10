@@ -29,7 +29,7 @@ schema_cache = cachetools.TTLCache(maxsize=1024, ttl=43200)
 class EventProducer(ABC):
 
     def __init__(self, *, qconnector_cls, event_cls, pg_host, pg_port, pg_database, pg_user, pg_password,
-                 pg_tables, pg_replication_slot, pg_output_plugin, pg_publication_name, **kwargs):
+                 pg_tables, pg_replication_slot, pg_output_plugin, pg_publication_name=None, **kwargs):
 
         self.__shutdown = False
         self.event_cls = event_cls
@@ -49,9 +49,7 @@ class EventProducer(ABC):
         self.__pg_output_plugin = pg_output_plugin
         self.__pg_connection_factory = LogicalReplicationConnection
 
-        if self.__pg_output_plugin == 'pgoutput':
-            kwargs['use_compression'] = False
-            self.__pg_publication_name = pg_publication_name
+        self.__pg_publication_name = pg_publication_name
 
         self.qconnector_cls: Type[QConnector] = qconnector_cls
         self.qconnector: QConnector = qconnector_cls(**kwargs)
@@ -210,22 +208,23 @@ class EventProducer(ABC):
             operation_type = 'INSERT' if message_type == 'I' else 'UPDATE' if message_type == 'U' else 'DELETE'
             table_name = self.__get_table_name(relation_id)
 
-            logger.debug(f'{operation_type} Change occurred on table: {table_name}')
-            logger.debug(f'{operation_type} Change occurred at LSN: {msg.data_start}')
+            if table_name in self.__pg_tables:
+                logger.debug(f'{operation_type} Change occurred on table: {table_name}')
+                logger.debug(f'{operation_type} Change occurred at LSN: {msg.data_start}')
 
-            payload = {
-                'schema': self.__get_schema(relation_id),
-                'payload': msg.payload
-            }
-            logger.debug(f'{operation_type} Change payload: {payload}')
+                payload = {
+                    'schema': self.__get_schema(relation_id),
+                    'payload': msg.payload
+                }
+                logger.debug(f'{operation_type} Change payload: {payload}')
 
-            self.publish(
-                routing_key=table_name,
-                payload=base64.b64encode(msg.payload).decode('utf-8')
-            )
+                self.publish(
+                    routing_key=table_name,
+                    payload=base64.b64encode(msg.payload).decode('utf-8')
+                )
 
-            logger.debug(f'{operation_type} Change processed on table: {table_name}')
-            logger.debug(f'{operation_type} Change processed at LSN: {msg.data_start}')
+                logger.debug(f'{operation_type} Change processed on table: {table_name}')
+                logger.debug(f'{operation_type} Change processed at LSN: {msg.data_start}')
 
         msg.cursor.send_feedback(flush_lsn=msg.data_start)
         self.check_shutdown()
