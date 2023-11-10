@@ -214,13 +214,13 @@ class EventProducer(ABC):
 
                 payload = {
                     'schema': self.__get_schema(relation_id),
-                    'payload': msg.payload
+                    'payload': base64.b64encode(msg.payload).decode('utf-8')
                 }
                 logger.debug(f'{operation_type} Change payload: {payload}')
 
                 self.publish(
                     routing_key=table_name,
-                    payload=base64.b64encode(msg.payload).decode('utf-8')
+                    payload=json.dumps(payload)
                 )
 
                 logger.debug(f'{operation_type} Change processed on table: {table_name}')
