@@ -24,13 +24,12 @@ class RabbitMQConnector(QConnector):
             self.__rmq_conn.close()
 
     def publish(self, routing_key, payload):
-        payload = compress(payload)
-        
-        logger.debug('sending message with routing_key %s compressed_body bytes %s ', routing_key, len(payload))
+        compressed_body = compress(payload)
+        logger.info('sending message with routing_key %s compressed_body bytes %s ', routing_key, len(compressed_body))
         self.__rmq_channel.basic_publish(
             exchange=self.__rabbitmq_exchange,
             routing_key=routing_key,
-            body=payload,
+            body=compressed_body,
             properties=pika.BasicProperties(delivery_mode=2)  # persistent delivery mode
         )
 
