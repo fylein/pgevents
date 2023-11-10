@@ -34,6 +34,7 @@ services:
       PGREPLICATIONSLOT: pgevents_slot
       PGOUTPUTPLUGIN: pgoutput
       PGTABLES: public.users
+      PGPUBLICATION: events
       RABBITMQ_URL: amqp://admin:password@rabbitmq:5672/?heartbeat=0
       RABBITMQ_EXCHANGE: pgevents_exchange
       LOG_LEVEL: DEBUG
