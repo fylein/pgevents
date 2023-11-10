@@ -2,7 +2,7 @@ import json
 from abc import ABC
 from typing import Type, Union
 
-from functools import lru_cache
+import cachetools
 
 import psycopg2
 from psycopg2 import pool
@@ -140,7 +140,7 @@ class EventProducer(ABC):
         msg.cursor.send_feedback(flush_lsn=msg.data_start)
         self.check_shutdown()
 
-    @lru_cache(maxsize=128)
+    @cachetools.cached(cache={}, key=lambda self, relation_id: cachetools.keys.hashkey(relation_id))
     def __get_table_name(self, relation_id: int) -> str:
         """
         Get the table name using the relation ID.
