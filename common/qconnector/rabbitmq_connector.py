@@ -36,11 +36,9 @@ class RabbitMQConnector(QConnector):
 
     def consume_stream(self, callback_fn):
         def stream_consumer(ch, method, properties, body):
-            body = decompress(body)
-
             callback_fn(
                 routing_key=method.routing_key,
-                payload=body
+                payload=decompress(body)
             )
             self.check_shutdown()
 
