@@ -1,6 +1,10 @@
 import io
-import logging
+
 from common.utils import DeserializerUtils
+from common.log import get_logger
+
+
+logger = get_logger(__name__)
 
 
 class BaseMessage:
@@ -20,7 +24,7 @@ class BaseMessage:
         self.message_type = self.read_string(length=1)
         self.relation_id = self.read_int32()
         self.cursor = cursor
-        self.schema = self.get_schema()
+        self.schema = self.get_schema(self.relation_id)
 
     def read_int16(self) -> int:
         """Read a 16-bit integer from the buffer."""
@@ -41,43 +45,44 @@ class BaseMessage:
         :return: A dictionary containing the decoded data.
         """
         n_columns = self.read_int16()
-        logging.debug(f'Number of columns: {n_columns}')
+        logger.debug(f'Number of columns: {n_columns}')
 
         data = {}
         columns = self.schema['columns']
 
         for i in range(n_columns):
             col_type = self.read_string(length=1)
-            logging.debug(f'Column type: {col_type}')
+            logger.debug(f'Column type: {col_type}')
 
             if col_type == 'n':
-                logging.debug('NULL')
+                logger.debug('NULL')
                 data[columns[i]['name']] = None
             elif col_type == 'u':
-                logging.debug('Unchanged TOASTed value')
+                logger.debug('Unchanged TOASTed value')
                 data[columns[i]['name']] = None
             elif col_type == 't':
                 length = self.read_int32()
                 value = self.read_string(length=length)
-                logging.debug(f'Text: {value}')
+                logger.debug(f'Text: {value}')
                 data[columns[i]['name']] = value
 
         return data
 
-    def get_schema(self) -> dict:
+    def get_schema(self, relation_id) -> dict:
         """
         Retrieve the schema for the relation.
 
         :return: A dictionary containing the schema information.
         """
-        relation_id = self.relation_id
-        logging.debug(f'Relation ID: {relation_id}')
+        logger.debug(f'Relation ID: {relation_id}')
+        logger.debug('Getting Schema...')
 
         schema = {
             'relation_id': relation_id,
             'columns': []
         }
 
+        logger.debug('Getting column names and types...')
         self.cursor.execute(
             f'SELECT attname, atttypid FROM pg_attribute WHERE attrelid = {relation_id} AND attnum > 0;'
         )
@@ -88,6 +93,7 @@ class BaseMessage:
                 'type': column[1]
             })
 
+        logger.debug(f'Scema retrieved successfully. {schema}')
         return schema
 
     def decode_insert_message(self):

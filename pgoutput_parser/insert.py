@@ -1,5 +1,9 @@
-import logging
+from common.log import get_logger
+
 from .base import BaseMessage
+
+
+logger = get_logger(__name__)
 
 
 class InsertMessage(BaseMessage):
@@ -17,10 +21,10 @@ class InsertMessage(BaseMessage):
             new_tuple = self.read_string(length=1)
             new_tuple_values = self.decode_tuple()
 
-            logging.debug(f'Message type: {message_type}')
-            logging.debug(f'Relation ID: {relation_id}')
-            logging.debug(f'New tuple: {new_tuple}')
-            logging.debug(f'New tuple values: {new_tuple_values}')
+            logger.debug(f'Message type: {message_type}')
+            logger.debug(f'Relation ID: {relation_id}')
+            logger.debug(f'New tuple: {new_tuple}')
+            logger.debug(f'New tuple values: {new_tuple_values}')
 
             return {
                 'table_name': self.table_name,

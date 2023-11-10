@@ -1,5 +1,9 @@
-import logging
+from common.log import get_logger
+
 from .base import BaseMessage
+
+
+logger = get_logger(__name__)
 
 
 class DeleteMessage(BaseMessage):
@@ -17,9 +21,9 @@ class DeleteMessage(BaseMessage):
             old_tuple = self.read_string(length=1)
             old_tuple_values = self.decode_tuple()
 
-            logging.debug(f'Message type: {message_type}')
-            logging.debug(f'Relation ID: {relation_id}')
-            logging.debug(f'Old tuple: {old_tuple}')
+            logger.debug(f'Message type: {message_type}')
+            logger.debug(f'Relation ID: {relation_id}')
+            logger.debug(f'Old tuple: {old_tuple}')
 
             return {
                 'table_name': self.table_name,
