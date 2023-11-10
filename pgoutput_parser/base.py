@@ -1,6 +1,5 @@
 import io
-
-import cachetools
+from typing import Any, Dict
 
 from common.utils import DeserializerUtils
 from common.log import get_logger
@@ -12,21 +11,19 @@ logger = get_logger(__name__)
 class BaseMessage:
     """Base class for decoding PostgreSQL logical replication messages."""
 
-    def __init__(self, table_name: str, message: bytes, cursor) -> None:
+    def __init__(self, table_name: str, message: bytes, schema: dict) -> None:
         """
         Initialize the BaseMessage instance.
 
         :param table_name: The name of the table being replicated.
         :param message: The raw message payload from the replication stream.
-        :param cursor: A psycopg2 cursor object for database operations.
         """
         self.message = message
         self.table_name = table_name
         self.buffer = io.BytesIO(message)
         self.message_type = self.read_string(length=1)
         self.relation_id = self.read_int32()
-        self.cursor = cursor
-        self.schema = self.get_schema(self.relation_id)
+        self.schema = schema
 
     def read_int16(self) -> int:
         """Read a 16-bit integer from the buffer."""
@@ -39,6 +36,22 @@ class BaseMessage:
     def read_string(self, length: int) -> str:
         """Read a string of a given length from the buffer."""
         return DeserializerUtils.convert_bytes_to_utf8(self.buffer.read(length))
+
+    @staticmethod
+    def calculate_diff(old_tuple_values: Dict[str, Any], new_tuple_values: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
+        """
+        Calculate the difference between old and new tuple values.
+
+        :param old_tuple_values: Dictionary containing old tuple values.
+        :param new_tuple_values: Dictionary containing new tuple values.
+        :return: A dictionary containing the differences.
+        """
+        diff = {}
+
+        for key in new_tuple_values.keys():
+            if old_tuple_values.get(key) != new_tuple_values.get(key):
+                diff[key] = new_tuple_values[key]
+        return diff
 
     def decode_tuple(self) -> dict:
         """
@@ -69,35 +82,6 @@ class BaseMessage:
                 data[columns[i]['name']] = value
 
         return data
-
-    @cachetools.cached(cache={}, key=lambda self, relation_id: cachetools.keys.hashkey(relation_id))
-    def get_schema(self, relation_id) -> dict:
-        """
-        Retrieve the schema for the relation.
-
-        :return: A dictionary containing the schema information.
-        """
-        logger.debug(f'Relation ID: {relation_id}')
-        logger.debug('Getting Schema...')
-
-        schema = {
-            'relation_id': relation_id,
-            'columns': []
-        }
-
-        logger.debug('Getting column names and types...')
-        self.cursor.execute(
-            f'SELECT attname, atttypid FROM pg_attribute WHERE attrelid = {relation_id} AND attnum > 0;'
-        )
-
-        for column in self.cursor.fetchall():
-            schema['columns'].append({
-                'name': column[0],
-                'type': column[1]
-            })
-
-        logger.debug(f'Scema retrieved successfully. {schema}')
-        return schema
 
     def decode_insert_message(self):
         """Placeholder for decoding insert messages. Should be overridden by subclass."""

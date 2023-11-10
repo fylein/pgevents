@@ -8,7 +8,7 @@ logger = get_logger(__name__)
 
 
 class RabbitMQConnector(QConnector):
-    def __init__(self, rabbitmq_url, rabbitmq_exchange, queue_name=None, binding_keys=None, use_compression=True):
+    def __init__(self, rabbitmq_url, rabbitmq_exchange, queue_name=None, binding_keys=None):
         self.__rabbitmq_url = rabbitmq_url
         self.__rabbitmq_exchange = rabbitmq_exchange
 
@@ -36,8 +36,7 @@ class RabbitMQConnector(QConnector):
 
     def consume_stream(self, callback_fn):
         def stream_consumer(ch, method, properties, body):
-            if self.use_compression:
-                body = decompress(body)
+            body = decompress(body)
 
             callback_fn(
                 routing_key=method.routing_key,

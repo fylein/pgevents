@@ -1,7 +1,6 @@
 from common.log import get_logger
 
 from .base import BaseMessage
-from typing import Dict, Any
 
 
 logger = get_logger(__name__)
@@ -11,26 +10,7 @@ logger = get_logger(__name__)
 class UpdateMessage(BaseMessage):
     """Class for decoding PostgreSQL logical replication update messages."""
 
-    @staticmethod
-    def __calculate_diff(old_tuple_values: Dict[str, Any], new_tuple_values: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
-        """
-        Calculate the difference between old and new tuple values.
-
-        :param old_tuple_values: Dictionary containing old tuple values.
-        :param new_tuple_values: Dictionary containing new tuple values.
-        :return: A dictionary containing the differences.
-        """
-        diff = {}
-
-        for key in old_tuple_values.keys():
-            if old_tuple_values[key] != new_tuple_values[key]:
-                diff[key] = {
-                    'old_value': old_tuple_values[key],
-                    'new_value': new_tuple_values[key]
-                }
-        return diff
-
-    def decode_update_message(self) -> Dict[str, Any]:
+    def decode_update_message(self) -> dict:
         """
         Decode an update message from the replication stream.
 
@@ -58,6 +38,6 @@ class UpdateMessage(BaseMessage):
                 'id': new_tuple_values['id'],
                 'old': old_tuple_values,
                 'new': new_tuple_values,
-                'diff': self.__calculate_diff(old_tuple_values, new_tuple_values),
+                'diff': self.calculate_diff(old_tuple_values, new_tuple_values),
                 'action': self.message_type
             }
