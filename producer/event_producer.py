@@ -1,4 +1,6 @@
 import json
+import base64
+
 from abc import ABC
 from typing import Type, Union
 
@@ -18,11 +20,16 @@ from common.utils import DeserializerUtils as parser_utils
 
 logger = get_logger(__name__)
 
+# 12 hour cache
+# Maximum of 1024 entries
+table_name_cache = cachetools.TTLCache(maxsize=1024, ttl=43200)
+schema_cache = cachetools.TTLCache(maxsize=1024, ttl=43200)
+
 
 class EventProducer(ABC):
 
     def __init__(self, *, qconnector_cls, event_cls, pg_host, pg_port, pg_database, pg_user, pg_password,
-                 pg_tables, pg_replication_slot, pg_output_plugin, **kwargs):
+                 pg_tables, pg_replication_slot, pg_output_plugin, pg_publication_name=None, **kwargs):
 
         self.__shutdown = False
         self.event_cls = event_cls
@@ -42,7 +49,7 @@ class EventProducer(ABC):
         self.__pg_output_plugin = pg_output_plugin
         self.__pg_connection_factory = LogicalReplicationConnection
 
-        kwargs['use_compression'] = True if self.__pg_output_plugin == 'wal2json' else False
+        self.__pg_publication_name = pg_publication_name
 
         self.qconnector_cls: Type[QConnector] = qconnector_cls
         self.qconnector: QConnector = qconnector_cls(**kwargs)
@@ -62,9 +69,9 @@ class EventProducer(ABC):
 
         self.__replication_cursor = self.__db_conn_pool.getconn().cursor()
 
-        decode = True
-
         if self.__pg_output_plugin == 'wal2json':
+            decode = True
+
             options = {
                 'format-version': 2,
                 'include-types': True,
@@ -75,7 +82,7 @@ class EventProducer(ABC):
         else:
             options = {
                 'proto_version': 1,
-                'publication_names': 'events'
+                'publication_names': self.__pg_publication_name
             }
 
             decode = False
@@ -140,7 +147,7 @@ class EventProducer(ABC):
         msg.cursor.send_feedback(flush_lsn=msg.data_start)
         self.check_shutdown()
 
-    @cachetools.cached(cache={}, key=lambda self, relation_id: cachetools.keys.hashkey(relation_id))
+    @cachetools.cached(cache=table_name_cache, key=lambda self, relation_id: cachetools.keys.hashkey(relation_id))
     def __get_table_name(self, relation_id: int) -> str:
         """
         Get the table name using the relation ID.
@@ -162,6 +169,34 @@ class EventProducer(ABC):
         except Exception:
             logger.exception("Failed to get table name.")
             raise
+    
+    @cachetools.cached(cache=schema_cache, key=lambda self, relation_id: cachetools.keys.hashkey(relation_id))
+    def __get_schema(self, relation_id) -> dict:
+        """
+        Retrieve the schema for the relation.
+        :return: A dictionary containing the schema information.
+        """
+        logger.debug(f'Relation ID: {relation_id}')
+        logger.debug('Getting Schema...')
+
+        schema = {
+            'relation_id': relation_id,
+            'columns': []
+        }
+
+        logger.debug('Getting column names and types...')
+        self.__db_cur.execute(
+            f'SELECT attname, atttypid FROM pg_attribute WHERE attrelid = {relation_id} AND attnum > 0;'
+        )
+
+        for column in self.__db_cur.fetchall():
+            schema['columns'].append({
+                'name': column[0],
+                'type': column[1]
+            })
+
+        logger.debug(f'Schema retrieved successfully. {schema}')
+        return schema
 
     def pgoutput_msg_processor(self, msg):
         message_type = msg.payload[:1].decode('utf-8')
@@ -173,16 +208,23 @@ class EventProducer(ABC):
             operation_type = 'INSERT' if message_type == 'I' else 'UPDATE' if message_type == 'U' else 'DELETE'
             table_name = self.__get_table_name(relation_id)
 
-            logger.debug(f'{operation_type} Change occurred on table: {table_name}')
-            logger.debug(f'{operation_type} Change occurred at LSN: {msg.data_start}')
+            if table_name in self.__pg_tables:
+                logger.debug(f'{operation_type} Change occurred on table: {table_name}')
+                logger.debug(f'{operation_type} Change occurred at LSN: {msg.data_start}')
 
-            self.publish(
-                routing_key=table_name,
-                payload=msg.payload
-            )
+                payload = {
+                    'schema': self.__get_schema(relation_id),
+                    'payload': msg.payload
+                }
+                logger.debug(f'{operation_type} Change payload: {payload}')
 
-            logger.debug(f'{operation_type} Change processed on table: {table_name}')
-            logger.debug(f'{operation_type} Change processed at LSN: {msg.data_start}')
+                self.publish(
+                    routing_key=table_name,
+                    payload=base64.b64encode(msg.payload).decode('utf-8')
+                )
+
+                logger.debug(f'{operation_type} Change processed on table: {table_name}')
+                logger.debug(f'{operation_type} Change processed at LSN: {msg.data_start}')
 
         msg.cursor.send_feedback(flush_lsn=msg.data_start)
         self.check_shutdown()

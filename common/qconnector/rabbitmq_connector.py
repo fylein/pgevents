@@ -16,7 +16,6 @@ class RabbitMQConnector(QConnector):
         self.__rmq_channel = None
         self.__queue_name = queue_name
         self.__binding_keys = binding_keys
-        self.use_compression = use_compression
 
         super().__init__()
 
@@ -25,11 +24,9 @@ class RabbitMQConnector(QConnector):
             self.__rmq_conn.close()
 
     def publish(self, routing_key, payload):
-        if self.use_compression:
-            payload = compress(payload)
+        payload = compress(payload)
         
         logger.debug('sending message with routing_key %s compressed_body bytes %s ', routing_key, len(payload))
-
         self.__rmq_channel.basic_publish(
             exchange=self.__rabbitmq_exchange,
             routing_key=routing_key,
