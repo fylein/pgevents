@@ -1,5 +1,7 @@
 import io
 
+import cachetools
+
 from common.utils import DeserializerUtils
 from common.log import get_logger
 
@@ -68,6 +70,7 @@ class BaseMessage:
 
         return data
 
+    @cachetools.cached(cache={}, key=lambda self, relation_id: cachetools.keys.hashkey(relation_id))
     def get_schema(self, relation_id) -> dict:
         """
         Retrieve the schema for the relation.
