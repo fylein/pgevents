@@ -56,7 +56,7 @@ class EventProducer(ABC):
         self.__db_conn = psycopg2.connect(
             host=self.__pg_host,
             port=self.__pg_port,
-            database=self.__pg_database,
+            dbname=self.__pg_database,
             user=self.__pg_user,
             password=self.__pg_password,
             connection_factory=self.__pg_connection_factory
