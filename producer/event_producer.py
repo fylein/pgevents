@@ -179,10 +179,10 @@ class EventProducer(ABC):
                     parser = DeleteMessage(table_name=table_name, message=msg.payload, schema=schema)
                     parsed_message = parser.decode_delete_message()
 
-                    self.publish(
-                        routing_key=table_name,
-                        payload=json.dumps(parsed_message)
-                    )
+                self.publish(
+                    routing_key=table_name,
+                    payload=json.dumps(parsed_message)
+                )
 
                 logger.debug(f'Published message to queue: {parsed_message}')
                 logger.debug(f'Ack: Message {message_type} with lsn: {msg.data_start} for table: {table_name}')
