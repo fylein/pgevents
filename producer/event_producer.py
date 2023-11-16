@@ -1,13 +1,9 @@
 import json
-import base64
 
 from abc import ABC
 from typing import Type, Union
 
-import cachetools
-
 import psycopg2
-from psycopg2 import pool
 from psycopg2.extras import LogicalReplicationConnection
 
 from common.event import BaseEvent
@@ -16,14 +12,15 @@ from common.qconnector import QConnector
 from common.log import get_logger
 
 from common.utils import DeserializerUtils as parser_utils
+from pgoutput_parser import (
+    UpdateMessage,
+    InsertMessage,
+    DeleteMessage,
+    RelationMessage
+)
 
 
 logger = get_logger(__name__)
-
-# 12 hour cache
-# Maximum of 1024 entries
-table_name_cache = cachetools.TTLCache(maxsize=1024, ttl=43200)
-schema_cache = cachetools.TTLCache(maxsize=1024, ttl=43200)
 
 
 class EventProducer(ABC):
@@ -36,8 +33,7 @@ class EventProducer(ABC):
 
         self.__db_conn: Union[psycopg2.connection, None] = None
         self.__db_cur: Union[psycopg2.cursor, None] = None
-        self.__replication_cursor: Union[psycopg2.cursor, None] = None
-        self.__db_conn_pool: Union[psycopg2.pool.SimpleConnectionPool, None] = None
+
         self.__pg_tables = pg_tables
         self.__pg_replication_slot = pg_replication_slot
 
@@ -51,23 +47,21 @@ class EventProducer(ABC):
 
         self.__pg_publication_name = pg_publication_name
 
+        self.__table_schemas = {}
+
         self.qconnector_cls: Type[QConnector] = qconnector_cls
         self.qconnector: QConnector = qconnector_cls(**kwargs)
 
     def __connect_db(self):
-        self.__db_conn_pool = pool.SimpleConnectionPool(
-            minconn=1,
-            maxconn=2,
+        self.__db_conn = psycopg2.connect(
             host=self.__pg_host,
             port=self.__pg_port,
-            dbname=self.__pg_database,
+            database=self.__pg_database,
             user=self.__pg_user,
             password=self.__pg_password,
             connection_factory=self.__pg_connection_factory
         )
-        self.__db_cur = self.__db_conn_pool.getconn().cursor()
-
-        self.__replication_cursor = self.__db_conn_pool.getconn().cursor()
+        self.__db_cur = self.__db_conn.cursor()
 
         if self.__pg_output_plugin == 'wal2json':
             decode = True
@@ -91,7 +85,7 @@ class EventProducer(ABC):
         self.__create_replication_slot()
 
         logger.debug('options for slot %s', options)
-        self.__replication_cursor.start_replication(
+        self.__db_cur.start_replication(
             slot_name=self.__pg_replication_slot,
             options=options,
             decode=decode
@@ -147,84 +141,51 @@ class EventProducer(ABC):
         msg.cursor.send_feedback(flush_lsn=msg.data_start)
         self.check_shutdown()
 
-    @cachetools.cached(cache=table_name_cache, key=lambda self, relation_id: cachetools.keys.hashkey(relation_id))
-    def __get_table_name(self, relation_id: int) -> str:
-        """
-        Get the table name using the relation ID.
-
-        Args:
-            relation_id (int): The relation ID of the table.
-
-        Returns:
-            str: Full table name including schema.
-        """
-        try:
-            logger.debug('Getting table name for relation ID: %s', relation_id)
-            self.__db_cur.execute(
-                "select schemaname, relname from pg_stat_user_tables where relid = %s;",
-                (relation_id,)
-            )
-            schema_name, table_name = self.__db_cur.fetchone()
-            return f'{schema_name}.{table_name}'
-        except Exception:
-            logger.exception("Failed to get table name.")
-            raise
-    
-    @cachetools.cached(cache=schema_cache, key=lambda self, relation_id: cachetools.keys.hashkey(relation_id))
-    def __get_schema(self, relation_id) -> dict:
-        """
-        Retrieve the schema for the relation.
-        :return: A dictionary containing the schema information.
-        """
-        logger.debug(f'Relation ID: {relation_id}')
-        logger.debug('Getting Schema...')
-
-        schema = {
-            'relation_id': relation_id,
-            'columns': []
-        }
-
-        logger.debug('Getting column names and types...')
-        self.__db_cur.execute(
-            f'SELECT attname, atttypid FROM pg_attribute WHERE attrelid = {relation_id} AND attnum > 0;'
-        )
-
-        for column in self.__db_cur.fetchall():
-            schema['columns'].append({
-                'name': column[0],
-                'type': column[1]
-            })
-
-        logger.debug(f'Schema retrieved successfully. {schema}')
-        return schema
-
     def pgoutput_msg_processor(self, msg):
         message_type = msg.payload[:1].decode('utf-8')
 
-        # Convert bytes to int
-        relation_id = parser_utils.convert_bytes_to_int(msg.payload[1:5])
+        if message_type == 'R':
+            logger.debug(f'Received R message with lsn: {msg.data_start}')
+
+            parser = RelationMessage(table_name=None, message=msg.payload, schema=None)
+            parsed_message = parser.decode_relation_message()
+            self.__table_schemas[parsed_message['relation_id']] = parsed_message
 
         if message_type in ['I', 'U', 'D']:
-            operation_type = 'INSERT' if message_type == 'I' else 'UPDATE' if message_type == 'U' else 'DELETE'
-            table_name = self.__get_table_name(relation_id)
+            relation_id = parser_utils.convert_bytes_to_int(msg.payload[1:5])
+
+            schema = self.__table_schemas[relation_id]
+            table_name = self.__table_schemas[relation_id]['table_name']
+
+            logger.debug(f'Table name: {table_name}')
+            logger.debug(f'Schema: {schema}')
 
             if table_name in self.__pg_tables:
-                logger.debug(f'{operation_type} Change occurred on table: {table_name}')
-                logger.debug(f'{operation_type} Change occurred at LSN: {msg.data_start}')
 
-                payload = {
-                    'schema': self.__get_schema(relation_id),
-                    'payload': base64.b64encode(msg.payload).decode('utf-8')
-                }
-                logger.debug(f'{operation_type} Change payload: {payload}')
+                logger.debug(f'Received {message_type} message with lsn: {msg.data_start} for table: {table_name}')
+                
+                if message_type == 'I':
+                    logger.debug(f'INSERT Message, Message Type: {message_type} - {table_name}')
+                    parser = InsertMessage(table_name=table_name, message=msg.payload, schema=schema)
+                    parsed_message = parser.decode_insert_message()
 
-                self.publish(
-                    routing_key=table_name,
-                    payload=json.dumps(payload)
-                )
+                elif message_type == 'U':
+                    logger.debug(f'UPDATE Message, Message Type: {message_type} - {table_name}')
+                    parser = UpdateMessage(table_name=table_name, message=msg.payload, schema=schema)
+                    parsed_message = parser.decode_update_message()
 
-                logger.debug(f'{operation_type} Change processed on table: {table_name}')
-                logger.debug(f'{operation_type} Change processed at LSN: {msg.data_start}')
+                elif message_type == 'D':
+                    logger.debug(f'DELETE Message, Message Type: {message_type} - {table_name}')
+                    parser = DeleteMessage(table_name=table_name, message=msg.payload, schema=schema)
+                    parsed_message = parser.decode_delete_message()
+
+                    self.publish(
+                        routing_key=table_name,
+                        payload=json.dumps(parsed_message)
+                    )
+
+                logger.debug(f'Published message to queue: {parsed_message}')
+                logger.debug(f'Ack: Message {message_type} with lsn: {msg.data_start} for table: {table_name}')
 
         msg.cursor.send_feedback(flush_lsn=msg.data_start)
         self.check_shutdown()
@@ -238,7 +199,7 @@ class EventProducer(ABC):
                 self.pgoutput_msg_processor(msg=msg)
             self.check_shutdown()
 
-        self.__replication_cursor.consume_stream(consume=stream_consumer)
+        self.__db_cur.consume_stream(consume=stream_consumer)
 
     def get_event_routing_key_and_event(self, table_name: str, event: BaseEvent) -> (str, BaseEvent):
         return table_name, event
