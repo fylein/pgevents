@@ -84,6 +84,9 @@ class EventProducer(ABC):
         logger.info('Creating Replication Slot if not exists...')
         self.__create_replication_slot()
 
+        logger.info('Creating Replication Slot if not exists...')
+        self.__create_replication_slot()
+
         logger.debug('options for slot %s', options)
         self.__db_cur.start_replication(
             slot_name=self.__pg_replication_slot,
