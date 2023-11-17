@@ -1,15 +1,13 @@
-FROM postgres:12-alpine
-
-RUN apk add --no-cache gcc make clang libc-dev llvm
-
-COPY ./wal2json-wal2json_2_3.tar.gz wal2json-wal2json_2_3.tar.gz
-
-RUN tar -zxf wal2json-wal2json_2_3.tar.gz
-
-COPY ./fixtures/* /docker-entrypoint-initdb.d/
+FROM postgres:12
 
 RUN export PATH=/usr/lib/postgresql/12/bin:$PATH
 
-RUN cd wal2json-wal2json_2_3 \
-    && make \
-    && make install
+# Copy the database initialization script:
+COPY ./fixtures/* /docker-entrypoint-initdb.d/
+COPY ./init-pgconf.sh /docker-entrypoint-initdb.d/init-pgconf.sh
+
+# Install wal2json
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        postgresql-12-wal2json \
+    && rm -rf /var/lib/apt/lists/*

@@ -20,8 +20,8 @@ services:
     ports:
       - "5432:5432"
     volumes:
+      - ./:/pgevents
       - database-data:/var/lib/postgresql/data/
-      - ./dev/postgres/postgres.conf:/usr/local/share/postgresql/postgresql.conf.sample
   producer:
     build: .
     restart: unless-stopped
@@ -37,6 +37,8 @@ services:
       RABBITMQ_EXCHANGE: pgevents_exchange
       LOG_LEVEL: DEBUG
     command: ["bash", "-c", "producer"]
+    volumes:
+      - ./producer:/pgevents/producer
     depends_on:
       - database
       - rabbitmq
@@ -50,6 +52,8 @@ services:
       RABBITMQ_BINDING_KEYS: #
       RABBITMQ_QUEUE_NAME: all_events_queue
     command: ["bash", "-c", "event_logger"]
+    volumes:
+      - ./consumer:/pgevents/consumer
     depends_on:
       - database
       - rabbitmq

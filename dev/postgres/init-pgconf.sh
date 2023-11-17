@@ -1,0 +1,1 @@
+cat /pgevents/dev/postgres/postgres.conf > /var/lib/postgresql/data/postgresql.conf
