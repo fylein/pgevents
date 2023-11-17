@@ -20,9 +20,10 @@ logger = log.get_logger(__name__)
 @click.option('--pg_replication_slot', default=lambda: os.environ.get('PGREPLICATIONSLOT', None), required=True, help='Postgresql Replication Slot Name ($PGREPLICATIONSLOT)')
 @click.option('--pg_output_plugin', default=lambda: os.environ.get('PGOUTPUTPLUGIN', 'wal2json'), required=True, help='Postgresql Output Plugin ($PGOUTPUTPLUGIN)')
 @click.option('--pg_tables', default=lambda: os.environ.get('PGTABLES', None), required=False, help='Restrict to specific tables e.g. public.transactions,public.reports')
+@click.option('--pg_publication_name', default=lambda: os.environ.get('PGPUBLICATION', None), required=False, help='Restrict to specific publications e.g. events')
 @click.option('--rabbitmq_url', default=lambda: os.environ.get('RABBITMQ_URL', None), required=True, help='RabbitMQ url ($RABBITMQ_URL)')
 @click.option('--rabbitmq_exchange', default=lambda: os.environ.get('RABBITMQ_EXCHANGE', None), required=True, help='RabbitMQ exchange ($RABBITMQ_EXCHANGE)')
-def produce(pg_host, pg_port, pg_database, pg_user, pg_password, pg_replication_slot, pg_output_plugin, pg_tables, rabbitmq_url, rabbitmq_exchange):
+def produce(pg_host, pg_port, pg_database, pg_user, pg_password, pg_replication_slot, pg_output_plugin, pg_tables, pg_publication_name, rabbitmq_url, rabbitmq_exchange):
     p = EventProducer(
         qconnector_cls=RabbitMQConnector,
         event_cls=BaseEvent,
@@ -34,6 +35,7 @@ def produce(pg_host, pg_port, pg_database, pg_user, pg_password, pg_replication_
         pg_replication_slot=pg_replication_slot,
         pg_output_plugin=pg_output_plugin,
         pg_tables=pg_tables,
+        pg_publication_name=pg_publication_name,
         rabbitmq_url=rabbitmq_url,
         rabbitmq_exchange=rabbitmq_exchange
     )
