@@ -29,7 +29,7 @@ jobs:
       # Run Pytest with coverage
       - name: Run Tests
         run: |
-          python -m pytest tests/ --cov=. --junit-xml=test-reports/report.xml --cov-report=term-missing --cov-fail-under=70 | tee pytest-coverage.txt
+          python -m pytest tests/ --cov=. --junit-xml=test-reports/report.xml --cov-report=term-missing --cov-fail-under=92 | tee pytest-coverage.txt
           echo "STATUS=$(grep 'Required test' pytest-coverage.txt | awk '{ print $1 }')" >> $GITHUB_ENV
           echo "FAILED=$(awk -F'=' '/failures=/ {gsub(/"/, "", $2); print $2}' test-reports/report.xml)" >> $GITHUB_ENV
 
