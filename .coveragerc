@@ -1,0 +1,10 @@
+# .coveragerc
+[run]
+omit =
+    tests/*
+    */__init__.py
+    setup.py
+    */main.py
+
+[report]
+show_missing=true

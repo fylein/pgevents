@@ -11,25 +11,25 @@ from pgoutput_parser.base import BaseMessage
 
 
 # Test InsertMessage decoding
-def test_insert(insert_payload, insert_response, mocked_schema):
+def test_insert(insert_payload, insert_response, mock_schema):
 
-    parser = InsertMessage(table_name=mocked_schema['table_name'], message=insert_payload.payload, schema=mocked_schema)
+    parser = InsertMessage(table_name=mock_schema['table_name'], message=insert_payload.payload, schema=mock_schema)
     parsed_message = parser.decode_insert_message()
 
     assert parsed_message == insert_response
 
 
 # Test UpdateMessage decoding
-def test_update(update_payload, update_response, mocked_schema):
-    parser = UpdateMessage(table_name=mocked_schema['table_name'], message=update_payload.payload, schema=mocked_schema)
+def test_update(update_payload, update_response, mock_schema):
+    parser = UpdateMessage(table_name=mock_schema['table_name'], message=update_payload.payload, schema=mock_schema)
     parsed_message = parser.decode_update_message()
 
     assert parsed_message == update_response
 
 
 # Test DeleteMessage decoding
-def test_delete(delete_payload, delete_response, mocked_schema):
-    parser = DeleteMessage(table_name=mocked_schema['table_name'], message=delete_payload.payload, schema=mocked_schema)
+def test_delete(delete_payload, delete_response, mock_schema):
+    parser = DeleteMessage(table_name=mock_schema['table_name'], message=delete_payload.payload, schema=mock_schema)
     parsed_message = parser.decode_delete_message()
 
     assert parsed_message == delete_response

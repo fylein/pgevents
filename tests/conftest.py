@@ -23,7 +23,7 @@ def producer_init_params():
         'pg_password': 'test',
         'pg_replication_slot': 'test',
         'pg_output_plugin': 'pgoutput',
-        'pg_tables': 'test',
+        'pg_tables': 'public.users',
         'pg_publication_name': 'test',
         'rabbitmq_url': 'amqp://admin:password@rabbitmq:5672/?heartbeat=0',
         'rabbitmq_exchange': 'test'
@@ -48,7 +48,13 @@ def mock_pg_conn():
 
 
 @pytest.fixture
-def mocked_schema():
+def mock_basic_publish():
+    with mock.patch('pika.adapters.blocking_connection.BlockingChannel.basic_publish') as mock_publish:
+        yield mock_publish
+
+
+@pytest.fixture
+def mock_schema():
     return {
         'relation_id': 16385,
         'table_name': 'public.users',
@@ -61,6 +67,9 @@ def mocked_schema():
         ]
     }
 
+@pytest.fixture
+def wal2json_payload():
+    return {"action":"D","lsn":"0/1671850","schema":"public","table":"users","identity":[{"name":"id","type":"integer","value":2},{"name":"full_name","type":"text","value":"Geezer Butler"},{"name":"company","type":"jsonb","value":"{\"name\": \"Fyle\"}"},{"name":"created_at","type":"timestamp with time zone","value":"2023-11-17 13:35:09.471909+00"},{"name":"updated_at","type":"timestamp with time zone","value":"2023-11-17 13:35:09.471909+00"}]}
 
 # Class to hold payload data
 class OutputData:
