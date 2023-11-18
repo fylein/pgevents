@@ -1,5 +1,6 @@
 import json
 from abc import ABC
+from typing import Type
 
 from common.event import BaseEvent
 from common.qconnector import QConnector

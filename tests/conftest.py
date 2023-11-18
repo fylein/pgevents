@@ -1,12 +1,12 @@
-import os
 from unittest import mock
-import psycopg2
 import pytest
 from common.event import base_event
 
 from common.qconnector import RabbitMQConnector
 from common import log
+
 from producer.event_producer import EventProducer
+from consumer.event_consumer import EventConsumer
 
 logger = log.get_logger(__name__)
 
@@ -190,3 +190,27 @@ def delete_response():
         'new': {},
         'diff': {}
     }
+
+
+@pytest.fixture
+def event_consumer_init_params():
+    return {
+        'qconnector_cls': RabbitMQConnector,
+        'event_cls': base_event.BaseEvent,
+        'rabbitmq_url': 'amqp://admin:password@rabbitmq:5672/?heartbeat=0',
+        'rabbitmq_exchange': 'test',
+        'queue_name': 'test',
+        'binding_keys': '#'
+    }
+
+
+@pytest.fixture
+def mock_consumer(event_consumer_init_params):
+    return EventConsumer(**event_consumer_init_params)
+
+
+@pytest.fixture
+def mock_event(update_response):
+    event = base_event.BaseEvent()
+    event.from_dict(update_response)
+    return event
