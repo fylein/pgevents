@@ -156,7 +156,6 @@ class EventProducer(ABC):
 
         if message_type in ['I', 'U', 'D']:
             relation_id = parser_utils.convert_bytes_to_int(msg.payload[1:5])
-            logger.debug(f'Message - {msg.payload}')
 
             schema = self.__table_schemas[relation_id]
             table_name = self.__table_schemas[relation_id]['table_name']
