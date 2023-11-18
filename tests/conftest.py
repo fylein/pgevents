@@ -48,12 +48,6 @@ def mock_pg_conn():
 
 
 @pytest.fixture
-def mock_basic_publish():
-    with mock.patch('pika.adapters.blocking_connection.BlockingChannel.basic_publish') as mock_publish:
-        yield mock_publish
-
-
-@pytest.fixture
 def mock_schema():
     return {
         'relation_id': 16385,
@@ -200,7 +194,7 @@ def event_consumer_init_params():
         'rabbitmq_url': 'amqp://admin:password@rabbitmq:5672/?heartbeat=0',
         'rabbitmq_exchange': 'test',
         'queue_name': 'test',
-        'binding_keys': '#'
+        'binding_keys': 'public.users'
     }
 
 
