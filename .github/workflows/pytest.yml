@@ -1,0 +1,47 @@
+name: Run Pytest and Coverage
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [assigned, opened, synchronize, reopened]
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the code from the repository
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # Setup Python environment
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+
+      # Install Python dependencies
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # Run Pytest with coverage
+      - name: Run Tests
+        run: |
+          python -m pytest tests/ --cov=. --junit-xml=test-reports/report.xml --cov-report=term-missing --cov-fail-under=70 | tee pytest-coverage.txt
+          echo "STATUS=$(grep 'Required test' pytest-coverage.txt | awk '{ print $1 }')" >> $GITHUB_ENV
+          echo "FAILED=$(awk -F'=' '/failures=/ {gsub(/"/, "", $2); print $2}' test-reports/report.xml)" >> $GITHUB_ENV
+
+      # Post Pytest coverage as a comment on PR
+      - name: Pytest coverage comment
+        uses: MishaKav/pytest-coverage-comment@main
+        with:
+          create-new-comment: true
+          pytest-coverage-path: ./pytest-coverage.txt
+          junitxml-path: ./test-reports/report.xml
+
+      # Evaluate test and coverage results
+      - name: Evaluate Coverage
+        if: env.STATUS == 'FAIL' || env.FAILED > 0
+        run: exit 1
