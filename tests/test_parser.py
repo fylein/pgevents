@@ -43,7 +43,6 @@ def test_relation(relation_payload, relation_response):
     assert parsed_message == relation_response
 
 
-
 # Test BaseMessage for NotImplementedError
 def test_base_not_implemented_methods():
     parser = BaseMessage(table_name=None, message=b'123', schema=None)

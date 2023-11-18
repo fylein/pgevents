@@ -1,38 +1,50 @@
 import os
+from unittest import mock
 import psycopg2
 import pytest
+from common.event import base_event
 
 from common.qconnector import RabbitMQConnector
 from common import log
+from producer.event_producer import EventProducer
 
 logger = log.get_logger(__name__)
 
 
-@pytest.fixture(scope='function')
-def db_conn():
-    db_connection = psycopg2.connect(
-        user=os.environ['PGUSER'],
-        password=os.environ['PGPASSWORD'],
-        host=os.environ['PGHOST'],
-        port=os.environ['PGPORT'],
-        dbname=os.environ['PGDATABASE']
-    )
+@pytest.fixture
+def producer_init_params():
+    return {
+        'qconnector_cls': RabbitMQConnector,
+        'event_cls': base_event.BaseEvent,
+        'pg_host': 'localhost',
+        'pg_port': 5432,
+        'pg_database': 'test',
+        'pg_user': 'test',
+        'pg_password': 'test',
+        'pg_replication_slot': 'test',
+        'pg_output_plugin': 'pgoutput',
+        'pg_tables': 'test',
+        'pg_publication_name': 'test',
+        'rabbitmq_url': 'amqp://admin:password@rabbitmq:5672/?heartbeat=0',
+        'rabbitmq_exchange': 'test'
+    }
 
-    yield db_connection
-    db_connection.close()
+
+@pytest.fixture
+def mock_producer(producer_init_params):
+    return EventProducer(**producer_init_params)
 
 
-@pytest.fixture(scope='session')
-def rmq_conn():
-    rmq_connector = RabbitMQConnector(
-        rabbitmq_url=os.environ['RABBITMQ_URL'],
-        rabbitmq_exchange=os.environ['RABBITMQ_EXCHANGE'],
-        queue_name='PRODUCER_TEST_QUEUE',
-        binding_keys='#'
-    )
+@pytest.fixture
+def mock_pika_connect():
+    with mock.patch('pika.BlockingConnection') as mock_pika:
+        yield mock_pika
 
-    rmq_connector.connect()
-    return rmq_connector
+
+@pytest.fixture
+def mock_pg_conn():
+    with mock.patch('psycopg2.connect') as mock_pg:
+        yield mock_pg
 
 
 @pytest.fixture
