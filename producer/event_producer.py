@@ -1,6 +1,5 @@
 import json
 
-from abc import ABC
 from typing import Type, Union
 
 import psycopg2
@@ -23,7 +22,7 @@ from pgoutput_parser import (
 logger = get_logger(__name__)
 
 
-class EventProducer(ABC):
+class EventProducer:
 
     def __init__(self, *, qconnector_cls, event_cls, pg_host, pg_port, pg_database, pg_user, pg_password,
                  pg_tables, pg_replication_slot, pg_output_plugin, pg_publication_name=None, **kwargs):
