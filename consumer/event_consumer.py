@@ -1,5 +1,4 @@
 import json
-from abc import ABC
 from typing import Type
 
 from common.event import BaseEvent
@@ -10,7 +9,7 @@ from common import log
 logger = log.get_logger(__name__)
 
 
-class EventConsumer(ABC):
+class EventConsumer:
 
     def __init__(self, *, qconnector_cls, event_cls, **kwargs):
         self.__shutdown = False
