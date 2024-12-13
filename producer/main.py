@@ -52,9 +52,11 @@ def produce(pg_host, pg_port, pg_database, pg_user, pg_password, pg_replication_
 
 @click.command()
 @click.option('--db_configs', default=lambda: os.environ.get('DB_CONFIGS', None), required=True, help='DB Configs')
+@click.option('--pg_output_plugin', default=lambda: os.environ.get('PGOUTPUTPLUGIN', 'wal2json'), required=True, help='Postgresql Output Plugin ($PGOUTPUTPLUGIN)')
+@click.option('--pg_publication_name', default=lambda: os.environ.get('PGPUBLICATION', None), required=False, help='Restrict to specific publications e.g. events')
 @click.option('--rabbitmq_url', default=lambda: os.environ.get('RABBITMQ_URL', None), required=True, help='RabbitMQ url ($RABBITMQ_URL)')
 @click.option('--rabbitmq_exchange', default=lambda: os.environ.get('RABBITMQ_EXCHANGE', None), required=True, help='RabbitMQ exchange ($RABBITMQ_EXCHANGE)')
-def produce_multiple_dbs(db_configs, rabbitmq_url, rabbitmq_exchange):
+def produce_multiple_dbs(db_configs, pg_output_plugin, pg_publication_name, rabbitmq_url, rabbitmq_exchange):
     try:
         db_configs = json.loads(db_configs)
         validate_db_configs(db_configs)
@@ -64,8 +66,8 @@ def produce_multiple_dbs(db_configs, rabbitmq_url, rabbitmq_exchange):
     common_kwargs = {
         'qconnector_cls': RabbitMQConnector,
         'event_cls': BaseEvent,
-        'pg_output_plugin': 'wal2json',
-        'pg_publication_name': 'events',
+        'pg_output_plugin': pg_output_plugin,
+        'pg_publication_name': pg_publication_name,
         'rabbitmq_url': rabbitmq_url,
         'rabbitmq_exchange': rabbitmq_exchange
     }
