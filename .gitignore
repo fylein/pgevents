@@ -17,3 +17,6 @@ dist/
 *.egg-info/
 
 .coverage
+
+# Ignore files
+experiment/

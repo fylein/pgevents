@@ -1,9 +1,14 @@
 import json
+import click
+from click.testing import CliRunner
 from unittest import mock
+import pytest
 
 from common.event import base_event
 from common.qconnector.rabbitmq_connector import RabbitMQConnector
+from common.utils import validate_db_configs
 from producer.event_producer import EventProducer
+from producer.main import produce_multiple_dbs
 
 
 # Test init
@@ -125,3 +130,159 @@ def test_start_consuming(mock_producer):
     mock_producer._EventProducer__pg_output_plugin = 'wal2json'
     mock_producer._EventProducer__db_cur.consume_stream.call_args[1]['consume']('test')
     mock_producer.wal2json_msg_processor.assert_called_once()
+
+
+def test_valid_single_db_config():
+    config = [{
+        'pg_host': 'localhost',
+        'pg_port': 5432,
+        'pg_database': 'test_db',
+        'pg_user': 'postgres',
+        'pg_password': 'secret',
+        'pg_tables': 'public.users',
+        'pg_replication_slot': 'test_slot'
+    }]
+    assert validate_db_configs(config) == None
+
+
+def test_valid_multiple_db_configs():
+    configs = [
+        {
+            'pg_host': 'localhost',
+            'pg_port': 5432,
+            'pg_database': 'db1',
+            'pg_user': 'postgres',
+            'pg_password': 'secret',
+            'pg_tables': 'public.users',
+            'pg_replication_slot': 'slot1'
+        },
+        {
+            'pg_host': 'localhost',
+            'pg_port': 5433,
+            'pg_database': 'db2',
+            'pg_user': 'postgres',
+            'pg_password': 'secret',
+            'pg_tables': 'public.orders',
+            'pg_replication_slot': 'slot2'
+        }
+    ]
+    assert validate_db_configs(configs) == None
+
+
+def test_empty_config_list():
+    with pytest.raises(click.BadParameter, match="db_configs cannot be empty"):
+        validate_db_configs([])
+
+
+def test_non_list_input():
+    with pytest.raises(click.BadParameter, match="db_configs must be a list"):
+        validate_db_configs({'some': 'dict'})
+
+
+def test_missing_required_field():
+    config = [{
+        'pg_host': 'localhost',
+        'pg_port': 5432
+    }]
+    with pytest.raises(click.BadParameter, match="Missing required field"):
+        validate_db_configs(config)
+
+
+def test_invalid_field_type():
+    config = [{
+        'pg_host': 'localhost',
+        'pg_port': '5432',
+        'pg_database': 'test_db',
+        'pg_user': 'postgres',
+        'pg_password': 'secret',
+        'pg_tables': 'public.users',
+        'pg_replication_slot': 'test_slot'
+    }]
+    with pytest.raises(click.BadParameter, match="must be of type int"):
+        validate_db_configs(config)
+
+
+def test_invalid_port_range():
+    config = [{
+        'pg_host': 'localhost',
+        'pg_port': 80,
+        'pg_database': 'test_db',
+        'pg_user': 'postgres',
+        'pg_password': 'secret',
+        'pg_tables': 'public.users',
+        'pg_replication_slot': 'test_slot'
+    }]
+    with pytest.raises(click.BadParameter, match="Invalid port number"):
+        validate_db_configs(config)
+
+
+def test_invalid_table_format():
+    config = [{
+        'pg_host': 'localhost',
+        'pg_port': 5432,
+        'pg_database': 'test_db',
+        'pg_user': 'postgres',
+        'pg_password': 'secret',
+        'pg_tables': 'invalid_format',
+        'pg_replication_slot': 'test_slot'
+    }]
+    with pytest.raises(click.BadParameter, match="Invalid table format"):
+        validate_db_configs(config)
+
+
+@pytest.fixture
+def valid_db_configs():
+    return json.dumps([{
+        'pg_host': 'database',
+        'pg_port': 5432,
+        'pg_database': 'dummy',
+        'pg_user': 'postgres',
+        'pg_password': 'postgres',
+        'pg_tables': 'public.users',
+        'pg_replication_slot': 'events'
+    }])
+
+def test_produce_multiple_dbs_success(valid_db_configs):
+    runner = CliRunner()
+    result = runner.invoke(produce_multiple_dbs, [
+        '--db_configs', valid_db_configs,
+        '--rabbitmq_url', 'amqp://admin:password@rabbitmq:5672/?heartbeat=0',
+        '--rabbitmq_exchange', 'pgevents_exchange'
+    ])
+
+    assert result.exit_code == 0
+
+def test_produce_multiple_dbs_invalid_json():
+    runner = CliRunner()
+    result = runner.invoke(produce_multiple_dbs, [
+        '--db_configs', 'invalid-json',
+        '--rabbitmq_url', 'amqp://admin:password@rabbitmq:5672/?heartbeat=0',
+        '--rabbitmq_exchange', 'pgevents_exchange'
+    ])
+
+    assert "db_configs must be a valid JSON string" in str(result.__dict__)
+
+@mock.patch('producer.main.validate_db_configs')
+def test_produce_multiple_dbs_invalid_config(mock_validate, valid_db_configs):
+    mock_validate.side_effect = click.BadParameter("Invalid config")
+
+    runner = CliRunner()
+    result = runner.invoke(produce_multiple_dbs, [
+        '--db_configs', valid_db_configs,
+        '--rabbitmq_url', 'amqp://admin:password@rabbitmq:5672/?heartbeat=0',
+        '--rabbitmq_exchange', 'pgevents_exchange'
+    ])
+
+    assert "Invalid config" in str(result.__dict__)
+
+def test_produce_multiple_dbs_common_kwargs(valid_db_configs):
+    runner = CliRunner()
+    result = runner.invoke(produce_multiple_dbs, [
+        '--db_configs', valid_db_configs,
+        '--pg_output_plugin', 'test_plugin',
+        '--pg_publication_name', 'test_pub',
+        '--rabbitmq_url', 'amqp://admin:password@rabbitmq:5672/?heartbeat=0',
+        '--rabbitmq_exchange', 'pgevents_exchange'
+    ])
+
+    assert result.exit_code == 0
