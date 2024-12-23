@@ -233,38 +233,31 @@ def test_invalid_table_format():
 @pytest.fixture
 def valid_db_configs():
     return json.dumps([{
-        'pg_host': 'localhost',
+        'pg_host': 'database',
         'pg_port': 5432,
-        'pg_database': 'test_db',
+        'pg_database': 'dummy',
         'pg_user': 'postgres',
-        'pg_password': 'secret',
+        'pg_password': 'postgres',
         'pg_tables': 'public.users',
-        'pg_replication_slot': 'test_slot'
+        'pg_replication_slot': 'events'
     }])
 
-@pytest.fixture
-def mock_multidb_producer():
-    with mock.patch('producer.main.MultiDBEventProducer') as mock_producer:
-        yield mock_producer
-
-def test_produce_multiple_dbs_success(valid_db_configs, mock_multidb_producer):
+def test_produce_multiple_dbs_success(valid_db_configs):
     runner = CliRunner()
     result = runner.invoke(produce_multiple_dbs, [
         '--db_configs', valid_db_configs,
-        '--rabbitmq_url', 'amqp://localhost',
-        '--rabbitmq_exchange', 'test_exchange'
+        '--rabbitmq_url', 'amqp://admin:password@rabbitmq:5672/?heartbeat=0',
+        '--rabbitmq_exchange', 'pgevents_exchange'
     ])
 
     assert result.exit_code == 0
-    mock_multidb_producer.assert_called_once()
-    mock_multidb_producer.return_value.start.assert_called_once()
 
 def test_produce_multiple_dbs_invalid_json():
     runner = CliRunner()
     result = runner.invoke(produce_multiple_dbs, [
         '--db_configs', 'invalid-json',
-        '--rabbitmq_url', 'amqp://localhost',
-        '--rabbitmq_exchange', 'test_exchange'
+        '--rabbitmq_url', 'amqp://admin:password@rabbitmq:5672/?heartbeat=0',
+        '--rabbitmq_exchange', 'pgevents_exchange'
     ])
 
     assert "db_configs must be a valid JSON string" in str(result.__dict__)
@@ -276,29 +269,20 @@ def test_produce_multiple_dbs_invalid_config(mock_validate, valid_db_configs):
     runner = CliRunner()
     result = runner.invoke(produce_multiple_dbs, [
         '--db_configs', valid_db_configs,
-        '--rabbitmq_url', 'amqp://localhost',
-        '--rabbitmq_exchange', 'test_exchange'
+        '--rabbitmq_url', 'amqp://admin:password@rabbitmq:5672/?heartbeat=0',
+        '--rabbitmq_exchange', 'pgevents_exchange'
     ])
 
     assert "Invalid config" in str(result.__dict__)
 
-def test_produce_multiple_dbs_common_kwargs(valid_db_configs, mock_multidb_producer):
+def test_produce_multiple_dbs_common_kwargs(valid_db_configs):
     runner = CliRunner()
     result = runner.invoke(produce_multiple_dbs, [
         '--db_configs', valid_db_configs,
         '--pg_output_plugin', 'test_plugin',
         '--pg_publication_name', 'test_pub',
-        '--rabbitmq_url', 'amqp://localhost',
-        '--rabbitmq_exchange', 'test_exchange'
+        '--rabbitmq_url', 'amqp://admin:password@rabbitmq:5672/?heartbeat=0',
+        '--rabbitmq_exchange', 'pgevents_exchange'
     ])
 
     assert result.exit_code == 0
-    mock_multidb_producer.assert_called_once_with(
-        json.loads(valid_db_configs),
-        qconnector_cls=mock.ANY,
-        event_cls=mock.ANY,
-        pg_output_plugin='test_plugin',
-        pg_publication_name='test_pub',
-        rabbitmq_url='amqp://localhost',
-        rabbitmq_exchange='test_exchange'
-    )

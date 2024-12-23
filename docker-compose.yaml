@@ -41,7 +41,7 @@ services:
     command: ["bash", "-c", "producer"]
     volumes:
       - ./producer:/pgevents/producer
-      - ./test:/pgevents/test
+      - ./tests:/pgevents/tests
     depends_on:
       - database
       - rabbitmq

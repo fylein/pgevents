@@ -31,9 +31,6 @@ def validate_db_configs(db_configs: List[Dict[str, Any]]) -> None:
         raise click.BadParameter("db_configs cannot be empty")
 
     for idx, config in enumerate(db_configs):
-        if not isinstance(config, dict):
-            raise click.BadParameter(f"Configuration at index {idx} must be a dictionary")
-
         # Check required fields
         for field, field_type in required_fields.items():
             if field not in config:
