@@ -8,7 +8,7 @@ from common.event import base_event
 from common.qconnector.rabbitmq_connector import RabbitMQConnector
 from common.utils import validate_db_configs
 from producer.event_producer import EventProducer
-from producer.main import produce_multiple_dbs
+from producer.main import producer_multiple_dbs
 
 
 # Test init
@@ -242,9 +242,9 @@ def valid_db_configs():
         'pg_replication_slot': 'events'
     }])
 
-def test_produce_multiple_dbs_success(valid_db_configs):
+def test_producer_multiple_dbs_success(valid_db_configs):
     runner = CliRunner()
-    result = runner.invoke(produce_multiple_dbs, [
+    result = runner.invoke(producer_multiple_dbs, [
         '--db_configs', valid_db_configs,
         '--rabbitmq_url', 'amqp://admin:password@rabbitmq:5672/?heartbeat=0',
         '--rabbitmq_exchange', 'pgevents_exchange'
@@ -252,9 +252,9 @@ def test_produce_multiple_dbs_success(valid_db_configs):
 
     assert result.exit_code == 0
 
-def test_produce_multiple_dbs_invalid_json():
+def test_producer_multiple_dbs_invalid_json():
     runner = CliRunner()
-    result = runner.invoke(produce_multiple_dbs, [
+    result = runner.invoke(producer_multiple_dbs, [
         '--db_configs', 'invalid-json',
         '--rabbitmq_url', 'amqp://admin:password@rabbitmq:5672/?heartbeat=0',
         '--rabbitmq_exchange', 'pgevents_exchange'
@@ -263,11 +263,11 @@ def test_produce_multiple_dbs_invalid_json():
     assert "db_configs must be a valid JSON string" in str(result.__dict__)
 
 @mock.patch('producer.main.validate_db_configs')
-def test_produce_multiple_dbs_invalid_config(mock_validate, valid_db_configs):
+def test_producer_multiple_dbs_invalid_config(mock_validate, valid_db_configs):
     mock_validate.side_effect = click.BadParameter("Invalid config")
 
     runner = CliRunner()
-    result = runner.invoke(produce_multiple_dbs, [
+    result = runner.invoke(producer_multiple_dbs, [
         '--db_configs', valid_db_configs,
         '--rabbitmq_url', 'amqp://admin:password@rabbitmq:5672/?heartbeat=0',
         '--rabbitmq_exchange', 'pgevents_exchange'
@@ -275,9 +275,9 @@ def test_produce_multiple_dbs_invalid_config(mock_validate, valid_db_configs):
 
     assert "Invalid config" in str(result.__dict__)
 
-def test_produce_multiple_dbs_common_kwargs(valid_db_configs):
+def test_producer_multiple_dbs_common_kwargs(valid_db_configs):
     runner = CliRunner()
-    result = runner.invoke(produce_multiple_dbs, [
+    result = runner.invoke(producer_multiple_dbs, [
         '--db_configs', valid_db_configs,
         '--pg_output_plugin', 'test_plugin',
         '--pg_publication_name', 'test_pub',
