@@ -4,7 +4,7 @@ setup(
     name='pgevents',
     version='0.2',
     packages=find_packages(
-        include=['src', 'producer', 'consumer', 'common']
+        include=['src', 'producer', 'consumer', 'common', 'event']
     ),
     entry_points='''
         [console_scripts]
