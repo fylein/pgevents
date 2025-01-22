@@ -222,31 +222,3 @@ class EventProducer(ABC):
         if self.__shutdown and self.__db_conn:
             logger.warning('Shutting down...')
             self.__db_conn.close()
-
-
-class MultiDBEventProducer:
-    def __init__(self, db_configs: List[dict], **common_kwargs):
-        self.producers = []
-        self.threads = []
-
-        for db_config in db_configs:
-            config = {**common_kwargs, **db_config}
-            producer = EventProducer(**config)
-            self.producers.append(producer)
-
-    def start(self):
-        for producer in self.producers:
-            thread = threading.Thread(target=self._run_producer, args=(producer,))
-            self.threads.append(thread)
-            thread.start()
-
-    def _run_producer(self, producer: EventProducer):
-        producer.connect()
-        producer.start_consuming()
-
-    def shutdown(self):
-        for producer in self.producers:
-            producer.shutdown()
-
-        for thread in self.threads:
-            thread.join()
