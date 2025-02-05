@@ -164,7 +164,7 @@ class EventProducer(ABC):
             logger.debug(f'Table name: {table_name}')
             logger.debug(f'Schema: {schema}')
 
-            if table_name in self.__pg_tables:
+            if table_name in self.__pg_tables or self.__pg_tables == 'public.*':
 
                 logger.debug(f'Received {message_type} message with lsn: {msg.data_start} for table: {table_name}')
                 
@@ -183,8 +183,9 @@ class EventProducer(ABC):
                     parser = DeleteMessage(table_name=table_name, message=msg.payload, schema=schema)
                     parsed_message = parser.decode_delete_message()
 
+                routing_key = f"{self.__pg_database}.{table_name}"
                 self.publish(
-                    routing_key=table_name,
+                    routing_key=routing_key,
                     payload=json.dumps(parsed_message)
                 )
 
