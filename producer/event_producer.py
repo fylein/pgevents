@@ -147,6 +147,7 @@ class EventProducer(ABC):
 
     def pgoutput_msg_processor(self, msg):
         message_type = msg.payload[:1].decode('utf-8')
+        logger.debug(f'messages: {message_type}')
 
         if message_type == 'R':
             logger.debug(f'Received R message with lsn: {msg.data_start}')
@@ -164,8 +165,7 @@ class EventProducer(ABC):
             logger.debug(f'Table name: {table_name}')
             logger.debug(f'Schema: {schema}')
 
-            if table_name in self.__pg_tables:
-
+            if table_name in self.__pg_tables or '.*' in self.__pg_tables:
                 logger.debug(f'Received {message_type} message with lsn: {msg.data_start} for table: {table_name}')
                 
                 if message_type == 'I':
@@ -183,8 +183,9 @@ class EventProducer(ABC):
                     parser = DeleteMessage(table_name=table_name, message=msg.payload, schema=schema)
                     parsed_message = parser.decode_delete_message()
 
+                routing_key = f"{self.__pg_database}.{table_name}"
                 self.publish(
-                    routing_key=table_name,
+                    routing_key=routing_key,
                     payload=json.dumps(parsed_message)
                 )
 
