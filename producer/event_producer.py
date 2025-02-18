@@ -147,7 +147,6 @@ class EventProducer(ABC):
 
     def pgoutput_msg_processor(self, msg):
         message_type = msg.payload[:1].decode('utf-8')
-        logger.debug(f'messages: {message_type}')
 
         if message_type == 'R':
             logger.debug(f'Received R message with lsn: {msg.data_start}')
