@@ -1,0 +1,54 @@
+name: Staging Deployment
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    types: [labeled]
+
+jobs:
+  staging_deploy:
+    if: (github.event_name != 'pull_request') || (github.event_name == 'pull_request' && github.event.action == 'labeled' && github.event.label.name == 'deploy')
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - name: Push to DockerHub
+        uses: fylein/docker-release-action@master
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
+          IMAGE_NAME: fyle_pgevents
+
+      - name: Install kustomize
+        run: |
+          curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
+          sudo mv kustomize /usr/local/bin/
+      - name: Clone deployment repository
+        uses: actions/checkout@v2
+        with:
+          repository: ${{ vars.STAGING_DEPLOY_REPO }}
+          ref: master
+          path: ${{ vars.STAGING_DEPLOY_REPO }}
+          persist-credentials: false
+          token: ${{ secrets.DEPLOY_GIT_ACCESS_TOKEN }}
+
+      - name: Update Image Tag - staging
+        run: |
+          NEW_TAG="v$(git rev-parse --short HEAD)"
+          cd ${{ vars.STAGING_DEPLOY_REPO }}/${{ vars.STAGING_DEPLOY_DIR }}/staging/integrations
+          kustomize edit set image docker.io/${{ secrets.DOCKERHUB_USERNAME }}/fyle_pgevents=docker.io/${{ secrets.DOCKERHUB_USERNAME }}/fyle_pgevents:$NEW_TAG
+      - name: Commit and push changes
+        run: |
+          cd ${{ vars.STAGING_DEPLOY_REPO }}/
+          git config --global user.email "integrations@fylehq.com"
+          git config --global user.name "GitHub Actions"
+          git add .
+          git commit -m "Deployed fyle-integrations-pgevents-writer:$NEW_TAG to staging"
+          git remote set-url origin https://x-access-token:${{ secrets.DEPLOY_GIT_ACCESS_TOKEN }}@github.com/${{ vars.STAGING_DEPLOY_REPO }}
+          git pull origin master
+          git push origin master 
