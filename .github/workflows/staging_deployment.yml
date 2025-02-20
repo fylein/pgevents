@@ -48,7 +48,7 @@ jobs:
           git config --global user.email "integrations@fylehq.com"
           git config --global user.name "GitHub Actions"
           git add .
-          git commit -m "Deployed fyle-integrations-pgevents-writer:$NEW_TAG to staging"
+          git commit -m "Deployed fyle_pgevents:$NEW_TAG to staging"
           git remote set-url origin https://x-access-token:${{ secrets.DEPLOY_GIT_ACCESS_TOKEN }}@github.com/${{ vars.STAGING_DEPLOY_REPO }}
           git pull origin master
           git push origin master 
