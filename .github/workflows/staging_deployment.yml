@@ -3,7 +3,7 @@ name: Staging Deployment
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
     types: [labeled]
 
