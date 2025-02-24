@@ -20,5 +20,8 @@ WORKDIR /pgevents
 
 ADD . /pgevents
 
+# Make health check script executable
+RUN chmod +x /pgevents/producer/health_check.sh
+
 RUN pip install -e .
 CMD ["/bin/bash"]
