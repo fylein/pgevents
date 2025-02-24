@@ -1,1 +1,0 @@
-from .postgres_event_producer import PGEventProducer

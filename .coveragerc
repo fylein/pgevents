@@ -1,0 +1,13 @@
+# .coveragerc
+[run]
+omit =
+    tests/*
+    */__init__.py
+    setup.py
+    */main.py
+    common/event/base_event.py
+    common/exceptions.py
+    common/qconnector/q_connector.py
+
+[report]
+show_missing=true

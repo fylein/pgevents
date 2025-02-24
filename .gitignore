@@ -15,3 +15,8 @@ dev.sql
 build/
 dist/
 *.egg-info/
+
+.coverage
+
+# Ignore files
+experiment/
