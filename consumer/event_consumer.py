@@ -1,5 +1,5 @@
 import json
-from abc import ABC, abstractmethod
+from abc import ABC
 from typing import Type
 
 from common.event import BaseEvent
