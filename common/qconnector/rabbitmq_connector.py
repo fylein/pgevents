@@ -37,14 +37,15 @@ class RabbitMQConnector(QConnector):
         def stream_consumer(ch, method, properties, body):
             callback_fn(
                 routing_key=method.routing_key,
-                payload=decompress(body)
+                payload=decompress(body),
+                delivery_tag=method.delivery_tag
             )
             self.check_shutdown()
 
         self.__rmq_channel.basic_consume(
             queue=self.__queue_name,
             on_message_callback=stream_consumer,
-            auto_ack=True
+            auto_ack=False
         )
         self.__rmq_channel.start_consuming()
 
@@ -96,3 +97,11 @@ class RabbitMQConnector(QConnector):
                     queue=self.__queue_name,
                     routing_key=binding_key
                 )
+
+    def acknowledge_message(self, delivery_tag):
+        """Acknowledge a message has been processed successfully"""
+        self.__rmq_channel.basic_ack(delivery_tag=delivery_tag)
+
+    def reject_message(self, delivery_tag, requeue=False):
+        """Reject a message that couldn't be processed"""
+        self.__rmq_channel.basic_reject(delivery_tag=delivery_tag, requeue=requeue)

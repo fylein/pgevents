@@ -1,5 +1,5 @@
 import json
-from abc import ABC
+from abc import ABC, abstractmethod
 from typing import Type
 
 from common.event import BaseEvent
@@ -19,29 +19,25 @@ class EventConsumer(ABC):
         self.qconnector_cls: Type[QConnector] = qconnector_cls
         self.qconnector: QConnector = qconnector_cls(**kwargs)
 
-    def process_message(self, routing_key, event: BaseEvent):
+    def process_message(self, routing_key, event: BaseEvent, delivery_tag: int):
         logger.info('routing_key %s' % routing_key)
         logger.info('event %s' % event)
         logger.info('event %s' % event.to_dict())
-
-    @abstractmethod
-    def handle_exception(self, routing_key, event, error):
-        pass
 
     def connect(self):
         self.qconnector.connect()
 
     def start_consuming(self):
-        def stream_consumer(routing_key, payload):
+        def stream_consumer(routing_key, payload, properties=None, delivery_tag=None):
             payload_dict = json.loads(payload)
 
-            event: BaseEvent = self.event_cls()
-            event.from_dict(payload_dict)
+            if self.event_cls:
+                event: BaseEvent = self.event_cls()
+                event.from_dict(payload_dict)
+            else:
+                event = payload_dict
 
-            try:
-                self.process_message(routing_key, event)
-            except Exception as error:
-                self.handle_exception(routing_key, event, error)
+            self.process_message(routing_key, event, delivery_tag)
 
             self.check_shutdown()
 
