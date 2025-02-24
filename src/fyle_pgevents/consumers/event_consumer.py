@@ -18,6 +18,10 @@ class EventConsumer(ABC):
     def process_message(self, routing_key, event):
         pass
 
+    @abstractmethod
+    def handle_exception(self, routing_key, event, error):
+        pass
+
     def connect(self):
         self.qconnector.connect()
 
@@ -28,7 +32,11 @@ class EventConsumer(ABC):
             event: BaseEvent = self.event_cls()
             event.from_dict(payload_dict)
 
-            self.process_message(routing_key, event)
+            try:
+                self.process_message(routing_key, event)
+            except Exception as error:
+                self.handle_exception(routing_key, event, error)
+
             self.check_shutdown()
 
         self.qconnector.consume_stream(
