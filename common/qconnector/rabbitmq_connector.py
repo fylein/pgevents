@@ -8,9 +8,10 @@ logger = get_logger(__name__)
 
 
 class RabbitMQConnector(QConnector):
-    def __init__(self, rabbitmq_url, rabbitmq_exchange, queue_name=None, binding_keys=None):
+    def __init__(self, rabbitmq_url, rabbitmq_exchange, queue_name=None, binding_keys=None, prefetch_count=1):
         self.__rabbitmq_url = rabbitmq_url
         self.__rabbitmq_exchange = rabbitmq_exchange
+        self.__prefetch_count = prefetch_count
 
         self.__rmq_conn = None
         self.__rmq_channel = None
@@ -70,6 +71,10 @@ class RabbitMQConnector(QConnector):
             parameters=pika.URLParameters(self.__rabbitmq_url)
         )
         self.__rmq_channel = self.__rmq_conn.channel()
+
+        # Set QoS prefetch count
+        self.__rmq_channel.basic_qos(prefetch_count=self.__prefetch_count)
+
         self.__rmq_channel.exchange_declare(
             exchange=self.__rabbitmq_exchange,
             exchange_type='topic',
