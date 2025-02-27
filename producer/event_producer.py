@@ -218,6 +218,15 @@ class EventProducer(ABC):
     def shutdown(self):
         logger.warning('Shutdown triggered')
         self.__shutdown = True
+        
+        if self.__db_conn:
+            try:
+                self.__db_cur.close()
+                self.__db_conn.close()
+                logger.info('Database connection closed successfully')
+            except Exception as e:
+                logger.error(f'Error closing database connection: {e}')
+        
         self.qconnector.shutdown()
 
     def check_shutdown(self):
