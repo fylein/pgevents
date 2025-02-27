@@ -1,6 +1,8 @@
 import json
 from unittest import mock
 
+import psycopg2
+
 from common.event import base_event
 from common.qconnector.rabbitmq_connector import RabbitMQConnector
 from producer.event_producer import EventProducer
@@ -125,3 +127,58 @@ def test_start_consuming(mock_producer):
     mock_producer._EventProducer__pg_output_plugin = 'wal2json'
     mock_producer._EventProducer__db_cur.consume_stream.call_args[1]['consume']('test')
     mock_producer.wal2json_msg_processor.assert_called_once()
+
+@mock.patch('psycopg2.connect')
+def test_drop_replication_slot(mock_pg_conn, mock_producer):
+    # Setup mocks
+    mock_cursor = mock.Mock()
+    mock_connection = mock.Mock()
+    
+    # Create a context manager for cursor
+    mock_cursor_cm = mock.MagicMock()
+    mock_cursor_cm.__enter__ = mock.Mock(return_value=mock_cursor)
+    mock_cursor_cm.__exit__ = mock.Mock(return_value=None)
+    
+    mock_connection.cursor = mock.Mock(return_value=mock_cursor_cm)
+    mock_pg_conn.return_value = mock_connection
+
+    # Call the method
+    mock_producer._EventProducer__drop_replication_slot()
+
+    # Verify connection was made with correct parameters
+    mock_pg_conn.assert_called_once_with(
+        host=mock_producer._EventProducer__pg_host,
+        port=mock_producer._EventProducer__pg_port,
+        dbname=mock_producer._EventProducer__pg_database,
+        user=mock_producer._EventProducer__pg_user,
+        password=mock_producer._EventProducer__pg_password
+    )
+
+    # Verify cursor executed correct SQL
+    mock_cursor.execute.assert_called_once_with(
+        "SELECT pg_drop_replication_slot(%s);",
+        (mock_producer._EventProducer__pg_replication_slot,)
+    )
+
+    # Verify connection was committed and closed
+    mock_connection.commit.assert_called_once()
+    mock_connection.close.assert_called_once()
+
+
+def test_shutdown_cleanup(mock_producer):
+    # Mock the necessary components
+    mock_producer._EventProducer__db_conn = mock.Mock()
+    mock_producer._EventProducer__db_conn.closed = False
+    mock_producer._EventProducer__db_cur = mock.Mock()
+    mock_producer.qconnector = mock.Mock()
+    
+    # Mock drop_replication_slot
+    mock_producer._EventProducer__drop_replication_slot = mock.Mock()
+
+    mock_producer.shutdown()
+
+    assert mock_producer._EventProducer__shutdown is True
+    mock_producer._EventProducer__db_cur.close.assert_called_once()
+    mock_producer._EventProducer__db_conn.close.assert_called_once()
+    mock_producer._EventProducer__drop_replication_slot.assert_called_once()
+    mock_producer.qconnector.shutdown.assert_called_once()
