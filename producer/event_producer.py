@@ -121,6 +121,26 @@ class EventProducer(ABC):
             logger.exception("Operational error during initialization.")
             raise psycopg2.errors.OperationalError("Operational error during initialization.")
 
+
+    def __drop_replication_slot(self):
+        conn = psycopg2.connect(
+            host=self.__pg_host,
+            port=self.__pg_port,
+            dbname=self.__pg_database,
+            user=self.__pg_user,
+            password=self.__pg_password
+        )
+        try:
+            with conn.cursor() as cur:
+                cur.execute("SELECT pg_drop_replication_slot(%s);", (self.__pg_replication_slot,))
+                conn.commit()
+                print(f"Replication slot {self.__pg_replication_slot} dropped successfully.")
+        except Exception as e:
+            print(f"Error dropping replication slot {self.__pg_replication_slot}: {e}")
+        finally:
+            conn.close()
+
+
     def wal2json_msg_processor(self, msg):
         pl = json.loads(msg.payload)
 
@@ -200,14 +220,31 @@ class EventProducer(ABC):
 
     def start_consuming(self):
         def stream_consumer(msg):
-            logger.info('Received message: %s', msg)
-            if self.__pg_output_plugin == 'wal2json':
-                self.wal2json_msg_processor(msg=msg)
-            else:
-                self.pgoutput_msg_processor(msg=msg)
-            self.check_shutdown()
+            try:
+                if self.__shutdown:
+                    logger.info('Shutdown requested, stopping consumer')
+                    return
 
-        self.__db_cur.consume_stream(consume=stream_consumer)
+                logger.info('Received message: %s', msg)
+                if self.__pg_output_plugin == 'wal2json':
+                    self.wal2json_msg_processor(msg=msg)
+                else:
+                    self.pgoutput_msg_processor(msg=msg)
+            
+            except Exception as e:
+                logger.error(f'Error processing message: {e}')
+                if self.__shutdown:
+                    raise
+            finally:
+                self.check_shutdown()
+
+        try:
+            self.__db_cur.consume_stream(consume=stream_consumer)
+        except Exception as e:
+            if self.__shutdown:
+                logger.info('Shutting down gracefully')
+                return
+            raise
 
     def get_event_routing_key_and_event(self, table_name: str, event: BaseEvent) -> (str, BaseEvent):
         return table_name, event
@@ -216,22 +253,31 @@ class EventProducer(ABC):
         self.qconnector.publish(**kwargs)
 
     def shutdown(self):
+        """Gracefully shutdown the producer"""
         logger.warning('Shutdown triggered')
         self.__shutdown = True
         
-        if self.__db_conn:
+        if self.__db_conn and not self.__db_conn.closed:
             try:
                 self.__db_cur.close()
                 self.__db_conn.close()
                 logger.info('Database connection closed successfully')
             except Exception as e:
                 logger.error(f'Error closing database connection: {e}')
-        
-        self.qconnector.shutdown()
+
+        try:
+            self.__drop_replication_slot()
+        except Exception as e:
+            logger.error(f'Error dropping replication slot: {e}')
+
+        try:
+            self.qconnector.shutdown()
+        except Exception as e:
+            logger.error(f'Error shutting down queue connection: {e}')
 
     def check_shutdown(self):
+        """Check if shutdown was requested and raise SystemExit if true"""
         self.qconnector.check_shutdown()
-
-        if self.__shutdown and self.__db_conn:
-            logger.warning('Shutting down...')
-            self.__db_conn.close()
+        if self.__shutdown:
+            logger.warning('Shutdown requested, raising SystemExit')
+            raise SystemExit('Shutdown requested')
