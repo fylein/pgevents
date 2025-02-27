@@ -29,9 +29,12 @@ class UpdateMessage(BaseMessage):
             logger.debug(f'Relation ID: {relation_id}')
             logger.debug(f'Old tuple: {old_tuple}')
             logger.debug(f'New tuple: {new_tuple}')
-
             logger.debug(f'Old tuple values: {old_tuple_values}')
             logger.debug(f'New tuple values: {new_tuple_values}')
+
+            if not new_tuple_values or 'id' not in new_tuple_values:
+                logger.debug(f'Skipping update message - no new tuple values or id for table {self.table_name}')
+                return None
 
             return {
                 'table_name': self.table_name,

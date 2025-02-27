@@ -167,6 +167,7 @@ class EventProducer(ABC):
             if table_name in self.__pg_tables or '.*' in self.__pg_tables:
                 logger.debug(f'Received {message_type} message with lsn: {msg.data_start} for table: {table_name}')
                 
+                parsed_message = None
                 if message_type == 'I':
                     logger.debug(f'INSERT Message, Message Type: {message_type} - {table_name}')
                     parser = InsertMessage(table_name=table_name, message=msg.payload, schema=schema)
@@ -182,13 +183,16 @@ class EventProducer(ABC):
                     parser = DeleteMessage(table_name=table_name, message=msg.payload, schema=schema)
                     parsed_message = parser.decode_delete_message()
 
-                routing_key = f"{self.__pg_database}.{table_name}"
-                self.publish(
-                    routing_key=routing_key,
-                    payload=json.dumps(parsed_message)
-                )
+                if parsed_message:
+                    routing_key = f"{self.__pg_database}.{table_name}"
+                    self.publish(
+                        routing_key=routing_key,
+                        payload=json.dumps(parsed_message)
+                    )
+                    logger.debug(f'Published message to queue: {parsed_message}')
+                else:
+                    logger.warning(f'Skipping {message_type} message for table {table_name} - invalid or empty message')
 
-                logger.debug(f'Published message to queue: {parsed_message}')
                 logger.debug(f'Ack: Message {message_type} with lsn: {msg.data_start} for table: {table_name}')
 
         msg.cursor.send_feedback(flush_lsn=msg.data_start)
