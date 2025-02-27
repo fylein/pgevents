@@ -2,9 +2,11 @@ import json
 from unittest import mock
 
 import psycopg2
+import pytest
 
 from common.event import base_event
 from common.qconnector.rabbitmq_connector import RabbitMQConnector
+from pgoutput_parser.update import UpdateMessage
 from producer.event_producer import EventProducer
 
 
@@ -130,11 +132,9 @@ def test_start_consuming(mock_producer):
 
 @mock.patch('psycopg2.connect')
 def test_drop_replication_slot(mock_pg_conn, mock_producer):
-    # Setup mocks
     mock_cursor = mock.Mock()
     mock_connection = mock.Mock()
     
-    # Create a context manager for cursor
     mock_cursor_cm = mock.MagicMock()
     mock_cursor_cm.__enter__ = mock.Mock(return_value=mock_cursor)
     mock_cursor_cm.__exit__ = mock.Mock(return_value=None)
@@ -142,10 +142,8 @@ def test_drop_replication_slot(mock_pg_conn, mock_producer):
     mock_connection.cursor = mock.Mock(return_value=mock_cursor_cm)
     mock_pg_conn.return_value = mock_connection
 
-    # Call the method
     mock_producer._EventProducer__drop_replication_slot()
 
-    # Verify connection was made with correct parameters
     mock_pg_conn.assert_called_once_with(
         host=mock_producer._EventProducer__pg_host,
         port=mock_producer._EventProducer__pg_port,
@@ -154,13 +152,11 @@ def test_drop_replication_slot(mock_pg_conn, mock_producer):
         password=mock_producer._EventProducer__pg_password
     )
 
-    # Verify cursor executed correct SQL
     mock_cursor.execute.assert_called_once_with(
         "SELECT pg_drop_replication_slot(%s);",
         (mock_producer._EventProducer__pg_replication_slot,)
     )
 
-    # Verify connection was committed and closed
     mock_connection.commit.assert_called_once()
     mock_connection.close.assert_called_once()
 
@@ -172,7 +168,6 @@ def test_shutdown_cleanup(mock_producer):
     mock_producer._EventProducer__db_cur = mock.Mock()
     mock_producer.qconnector = mock.Mock()
     
-    # Mock drop_replication_slot
     mock_producer._EventProducer__drop_replication_slot = mock.Mock()
 
     mock_producer.shutdown()
@@ -180,5 +175,95 @@ def test_shutdown_cleanup(mock_producer):
     assert mock_producer._EventProducer__shutdown is True
     mock_producer._EventProducer__db_cur.close.assert_called_once()
     mock_producer._EventProducer__db_conn.close.assert_called_once()
+    mock_producer._EventProducer__drop_replication_slot.assert_called_once()
+    mock_producer.qconnector.shutdown.assert_called_once()
+
+def test_pgoutput_msg_processor_none_update_message(mock_producer, mock_schema):
+    mock_msg = mock.Mock()
+    mock_msg.payload = b'U\x00\x00@\x01'
+    mock_msg.cursor.send_feedback = mock.Mock()
+    mock_msg.data_start = 123
+
+    mock_producer._EventProducer__table_schemas = {
+        16385: {
+            'relation_id': 16385,
+            'table_name': 'public.users',
+            'columns': [
+                {'name': 'id'},
+                {'name': 'full_name'}
+            ]
+        }
+    }
+    mock_producer._EventProducer__pg_tables = ['public.users']
+    mock_producer.publish = mock.Mock()
+
+    with mock.patch('pgoutput_parser.UpdateMessage.decode_update_message', return_value=None):
+        with mock.patch('common.utils.DeserializerUtils.convert_bytes_to_int', return_value=16385):
+            mock_producer.pgoutput_msg_processor(mock_msg)
+
+            mock_producer.publish.assert_not_called()
+            
+            mock_msg.cursor.send_feedback.assert_called_once_with(flush_lsn=mock_msg.data_start)
+
+def test_update_message_returns_none(mock_schema):
+    message = b'U\x00\x00@\x01\x00\x02n\x00n'  # Message with NULL values
+    
+    parser = UpdateMessage(table_name=mock_schema['table_name'], message=message, schema=mock_schema)
+    parsed_message = parser.decode_update_message()
+    
+    assert parsed_message is None
+
+
+def test_start_consuming_with_shutdown(mock_producer):
+    mock_producer._EventProducer__db_cur = mock.Mock()
+    mock_producer._EventProducer__db_cur.consume_stream = mock.Mock()
+    mock_producer._EventProducer__shutdown = True
+
+    mock_producer.start_consuming()
+
+    callback = mock_producer._EventProducer__db_cur.consume_stream.call_args[1]['consume']
+    
+    test_msg = mock.Mock()
+    test_msg.payload = b'I\x00\x00@\x01'
+    
+    with pytest.raises(SystemExit):
+        callback(test_msg)
+
+def test_shutdown_with_no_db_conn(mock_producer):
+    mock_producer._EventProducer__db_conn = None
+    mock_producer._EventProducer__db_cur = None
+    
+    # Setup other required mocks
+    mock_producer._EventProducer__drop_replication_slot = mock.Mock()
+    mock_producer.qconnector = mock.Mock()
+
+    mock_producer.shutdown()
+
+    assert mock_producer._EventProducer__shutdown is True
+
+    mock_producer._EventProducer__drop_replication_slot.assert_called_once()
+    mock_producer.qconnector.shutdown.assert_called_once()
+
+
+def test_shutdown_with_db_conn_errors(mock_producer):
+    """Test shutdown with database connection errors"""
+    db_conn = mock.Mock()
+    db_conn.closed = False
+    db_cur = mock.Mock()
+    
+    mock_producer._EventProducer__db_conn = db_conn
+    mock_producer._EventProducer__db_cur = db_cur
+    
+    mock_producer._EventProducer__drop_replication_slot = mock.Mock()
+    mock_producer._EventProducer__drop_replication_slot.side_effect = Exception("Failed to drop replication slot")
+    mock_producer.qconnector = mock.Mock()
+    mock_producer.qconnector.shutdown.side_effect = Exception("Failed to shutdown queue")
+
+    mock_producer.shutdown()
+
+    assert mock_producer._EventProducer__shutdown is True
+
+    db_cur.close.assert_called_once()
+    db_conn.close.assert_called_once()
     mock_producer._EventProducer__drop_replication_slot.assert_called_once()
     mock_producer.qconnector.shutdown.assert_called_once()
