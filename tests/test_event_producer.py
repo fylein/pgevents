@@ -286,3 +286,44 @@ def test_start_consuming_exception_handling(mock_producer):
     
     with pytest.raises(Exception):
         mock_producer.start_consuming()
+
+def test_drop_replication_slot_exception(mock_producer):
+    """Test exception handling in drop_replication_slot"""
+    with mock.patch('psycopg2.connect') as mock_connect:
+        mock_cursor = mock.Mock()
+        mock_cursor.execute.side_effect = Exception("Test error")
+        
+        mock_connection = mock.Mock()
+        mock_connection.cursor.return_value = mock.MagicMock(
+            __enter__=mock.Mock(return_value=mock_cursor),
+            __exit__=mock.Mock(return_value=None)
+        )
+        
+        mock_connect.return_value = mock_connection
+        
+        mock_producer._EventProducer__drop_replication_slot()
+        
+        mock_connection.close.assert_called_once()
+
+def test_start_consuming_shutdown_exception(mock_producer):
+    """Test shutdown exception handling in start_consuming"""
+    mock_producer._EventProducer__db_cur = mock.Mock()
+    mock_producer._EventProducer__db_cur.consume_stream.side_effect = Exception("Test error")
+    mock_producer._EventProducer__shutdown = True
+
+def test_shutdown_with_connection_error(mock_producer):
+    """Test connection error handling during shutdown"""
+    mock_producer._EventProducer__db_conn = mock.Mock()
+    mock_producer._EventProducer__db_conn.closed = False
+    mock_producer._EventProducer__db_cur = mock.Mock()
+    mock_producer._EventProducer__db_cur.close.side_effect = Exception("Test error")
+    
+    mock_producer._EventProducer__drop_replication_slot = mock.Mock()
+    mock_producer.qconnector = mock.Mock()
+    
+    mock_producer.shutdown()
+    
+    assert mock_producer._EventProducer__shutdown is True
+    mock_producer._EventProducer__db_cur.close.assert_called_once()
+    mock_producer._EventProducer__drop_replication_slot.assert_called_once()
+    mock_producer.qconnector.shutdown.assert_called_once()
