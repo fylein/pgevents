@@ -267,3 +267,22 @@ def test_shutdown_with_db_conn_errors(mock_producer):
     db_conn.close.assert_called_once()
     mock_producer._EventProducer__drop_replication_slot.assert_called_once()
     mock_producer.qconnector.shutdown.assert_called_once()
+
+def test_create_replication_slot_operational_error(mock_producer):
+    """Test operational error handling in create_replication_slot"""
+    mock_producer._EventProducer__db_cur = mock.Mock()
+    mock_producer._EventProducer__db_cur.execute.side_effect = psycopg2.errors.OperationalError("Test error")
+    
+    with pytest.raises(psycopg2.errors.OperationalError) as exc_info:
+        mock_producer._EventProducer__create_replication_slot()
+    
+    assert "Operational error during initialization" in str(exc_info.value)
+
+def test_start_consuming_exception_handling(mock_producer):
+    """Test exception handling in start_consuming"""
+    mock_producer._EventProducer__db_cur = mock.Mock()
+    mock_producer._EventProducer__db_cur.consume_stream.side_effect = Exception("Test error")
+    mock_producer._EventProducer__shutdown = False
+    
+    with pytest.raises(Exception):
+        mock_producer.start_consuming()
