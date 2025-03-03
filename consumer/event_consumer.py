@@ -31,11 +31,8 @@ class EventConsumer(ABC):
         def stream_consumer(routing_key, payload, properties=None, delivery_tag=None):
             payload_dict = json.loads(payload)
 
-            if self.event_cls:
-                event: BaseEvent = self.event_cls()
-                event.from_dict(payload_dict)
-            else:
-                event = payload_dict
+            event: BaseEvent = self.event_cls()
+            event.from_dict(payload_dict)
 
             self.process_message(routing_key, event, delivery_tag)
 
