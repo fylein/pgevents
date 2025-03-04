@@ -37,3 +37,11 @@ class QConnector(ABC):
         if self.__shutdown:
             logger.warning('Shutting down now...')
             self.disconnect()
+
+    @abstractmethod
+    def acknowledge_message(self, delivery_tag):
+        pass
+
+    @abstractmethod
+    def reject_message(self, delivery_tag, requeue=False):
+        pass

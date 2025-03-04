@@ -40,7 +40,7 @@ def test_start_consuming(mock_consumer):
 # Test process_message
 def test_process_message(mock_consumer, mock_event):
     with mock.patch('logging.Logger.info') as mock_logger:
-        mock_consumer.process_message('test', mock_event)
+        mock_consumer.process_message('test', mock_event, 1)
         mock_logger.call_count == 3
 
 
