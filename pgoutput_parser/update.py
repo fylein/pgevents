@@ -32,13 +32,10 @@ class UpdateMessage(BaseMessage):
             logger.debug(f'Old tuple values: {old_tuple_values}')
             logger.debug(f'New tuple values: {new_tuple_values}')
 
-            if not new_tuple_values or 'id' not in new_tuple_values:
-                logger.debug(f'Skipping update message - no new tuple values or id for table {self.table_name}')
-                return None
 
             return {
                 'table_name': self.table_name,
-                'id': new_tuple_values['id'],
+                'id': new_tuple_values.get('id') or old_tuple_values.get('id'),
                 'old': old_tuple_values,
                 'new': new_tuple_values,
                 'diff': self.calculate_diff(old_tuple_values, new_tuple_values),
