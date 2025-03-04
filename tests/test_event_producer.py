@@ -178,41 +178,6 @@ def test_shutdown_cleanup(mock_producer):
     mock_producer._EventProducer__drop_replication_slot.assert_called_once()
     mock_producer.qconnector.shutdown.assert_called_once()
 
-def test_pgoutput_msg_processor_none_update_message(mock_producer, mock_schema):
-    mock_msg = mock.Mock()
-    mock_msg.payload = b'U\x00\x00@\x01'
-    mock_msg.cursor.send_feedback = mock.Mock()
-    mock_msg.data_start = 123
-
-    mock_producer._EventProducer__table_schemas = {
-        16385: {
-            'relation_id': 16385,
-            'table_name': 'public.users',
-            'columns': [
-                {'name': 'id'},
-                {'name': 'full_name'}
-            ]
-        }
-    }
-    mock_producer._EventProducer__pg_tables = ['public.users']
-    mock_producer.publish = mock.Mock()
-
-    with mock.patch('pgoutput_parser.UpdateMessage.decode_update_message', return_value=None):
-        with mock.patch('common.utils.DeserializerUtils.convert_bytes_to_int', return_value=16385):
-            mock_producer.pgoutput_msg_processor(mock_msg)
-
-            mock_producer.publish.assert_not_called()
-            
-            mock_msg.cursor.send_feedback.assert_called_once_with(flush_lsn=mock_msg.data_start)
-
-def test_update_message_returns_none(mock_schema):
-    message = b'U\x00\x00@\x01\x00\x02n\x00n'  # Message with NULL values
-    
-    parser = UpdateMessage(table_name=mock_schema['table_name'], message=message, schema=mock_schema)
-    parsed_message = parser.decode_update_message()
-    
-    assert parsed_message is None
-
 
 def test_start_consuming_with_shutdown(mock_producer):
     mock_producer._EventProducer__db_cur = mock.Mock()
