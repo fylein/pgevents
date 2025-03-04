@@ -134,9 +134,9 @@ class EventProducer(ABC):
             with conn.cursor() as cur:
                 cur.execute("SELECT pg_drop_replication_slot(%s);", (self.__pg_replication_slot,))
                 conn.commit()
-                print(f"Replication slot {self.__pg_replication_slot} dropped successfully.")
+                logger.info(f"Replication slot {self.__pg_replication_slot} dropped successfully.")
         except Exception as e:
-            print(f"Error dropping replication slot {self.__pg_replication_slot}: {e}")
+            logger.error(f"Error dropping replication slot {self.__pg_replication_slot}: {e}")
         finally:
             conn.close()
 
@@ -203,16 +203,13 @@ class EventProducer(ABC):
                     parser = DeleteMessage(table_name=table_name, message=msg.payload, schema=schema)
                     parsed_message = parser.decode_delete_message()
 
-                if parsed_message:
-                    routing_key = f"{self.__pg_database}.{table_name}"
-                    self.publish(
-                        routing_key=routing_key,
-                        payload=json.dumps(parsed_message)
-                    )
-                    logger.debug(f'Published message to queue: {parsed_message}')
-                else:
-                    logger.warning(f'Skipping {message_type} message for table {table_name} - invalid or empty message')
-
+                routing_key = f"{self.__pg_database}.{table_name}"
+                self.publish(
+                    routing_key=routing_key,
+                    payload=json.dumps(parsed_message)
+                )
+                
+                logger.debug(f'Published message to queue: {parsed_message}')
                 logger.debug(f'Ack: Message {message_type} with lsn: {msg.data_start} for table: {table_name}')
 
         msg.cursor.send_feedback(flush_lsn=msg.data_start)
