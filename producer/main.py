@@ -40,8 +40,11 @@ def produce(pg_host, pg_port, pg_database, pg_user, pg_password, pg_replication_
         rabbitmq_exchange=rabbitmq_exchange
     )
 
-    signal.signal(signal.SIGTERM, p.shutdown)
-    signal.signal(signal.SIGINT, p.shutdown)
+    def signal_handler(signum, frame):
+        p.shutdown()
+
+    signal.signal(signal.SIGTERM, signal_handler)
+    signal.signal(signal.SIGINT, signal_handler)
 
     p.connect()
     p.start_consuming()

@@ -25,8 +25,12 @@ def consume(rabbitmq_url, rabbitmq_exchange, binding_keys, queue_name):
         binding_keys=binding_keys
     )
 
-    signal.signal(signal.SIGTERM, event_logger.shutdown)
-    signal.signal(signal.SIGINT, event_logger.shutdown)
+    def signal_handler(signum, frame):
+        event_logger.shutdown()
+
+    signal.signal(signal.SIGTERM, signal_handler)
+    signal.signal(signal.SIGINT, signal_handler)
+
 
     event_logger.connect()
     event_logger.start_consuming()
