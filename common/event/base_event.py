@@ -154,7 +154,6 @@ class BaseEvent:
         self.id = payload_dict.get('id')
         self.diff = payload_dict.get('diff')
         self.action = payload_dict.get('action')
-        self.updated_at = payload_dict.get('updated_at')
         self.recorded_at = get_utc_now()
 
     def to_dict(self):
