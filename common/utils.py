@@ -1,6 +1,6 @@
 from typing import Union, List, Dict, Any
 import click
-
+from datetime import datetime, timezone
 
 class DeserializerUtils:
     @staticmethod
@@ -10,3 +10,6 @@ class DeserializerUtils:
     @staticmethod
     def convert_bytes_to_utf8(in_bytes: Union[bytes, bytearray]) -> str:
         return in_bytes.decode('utf-8')
+
+def get_utc_now() -> datetime:
+    return datetime.now(timezone.utc)

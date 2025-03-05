@@ -17,7 +17,6 @@ class RelationMessage(BaseMessage):
         :return: A dictionary containing the decoded relation message.
         """
         if self.message_type == 'R':
-            logger.debug(f'Message: {self.message}')
             message_type = self.message_type
 
             relation_id = self.relation_id
@@ -29,11 +28,6 @@ class RelationMessage(BaseMessage):
             self.read_int8()
 
             n_columns = self.read_int16()
-
-            logger.debug(f'Message type: {message_type}')
-            logger.debug(f'Relation ID: {relation_id}')
-            logger.debug(f'Table name: {table_name}')
-            logger.debug(f'Number of columns: {n_columns}')
 
             columns = []
 
@@ -48,8 +42,6 @@ class RelationMessage(BaseMessage):
 
                 # Type modifier
                 self.read_int32()
-                
-                logger.debug(f'Column name: {column_name}')
 
                 columns.append({'name': column_name})
             

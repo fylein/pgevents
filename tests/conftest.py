@@ -113,7 +113,7 @@ def insert_response():
             'full_name': 'Mike',
             'company': '{"name": "Fyle"}',
             'created_at': '2023-11-17 13:44:14.700844+00',
-            'updated_at': '2023-11-17 13:44:14.700844+00'
+            'updated_at': '2023-11-17 13:44:14.700844+00',
         },
         'id': '1',
         'old': {},
@@ -122,9 +122,10 @@ def insert_response():
             'full_name': 'Mike',
             'company': '{"name": "Fyle"}',
             'created_at': '2023-11-17 13:44:14.700844+00',
-            'updated_at': '2023-11-17 13:44:14.700844+00'
+            'updated_at': '2023-11-17 13:44:14.700844+00',
         },
-        'action': 'I'
+        'action': 'I',
+        'recorded_at': '2023-11-17 13:44:14.700844+00'
     }
 
 # Fixture for update payload
@@ -145,19 +146,21 @@ def update_response():
             'full_name': 'Mike',
             'company': '{"name": "Fyle"}',
             'created_at': '2023-11-17 13:44:14.700844+00',
-            'updated_at': '2023-11-17 13:44:14.700844+00'
+            'updated_at': '2023-11-17 13:44:14.700844+00',
         },
         'new': {
             'id': '1',
             'full_name': 'Myles',
             'company': '{"name": "Fyle"}',
             'created_at': '2023-11-17 13:44:14.700844+00',
-            'updated_at': '2023-11-17 13:44:14.700844+00'
+            'updated_at': '2023-11-17 13:44:14.700844+00',
+            
         },
         'diff': {
             'full_name': 'Myles'
         },
-        'action': 'U'
+        'action': 'U',
+        'recorded_at': '2023-11-17 13:44:14.700844+00'
     }
 
 # Fixture for delete payload
@@ -178,11 +181,12 @@ def delete_response():
             'full_name': 'Geezer Butler', 
             'company': '{"name": "Fyle"}',
             'created_at': '2023-11-17 13:35:09.471909+00',
-            'updated_at': '2023-11-17 13:35:09.471909+00'
+            'updated_at': '2023-11-17 13:35:09.471909+00',
         },
         'id': '2',
         'new': {},
-        'diff': {}
+        'diff': {},
+        'recorded_at': '2023-11-17 13:35:09.471909+00'
     }
 
 

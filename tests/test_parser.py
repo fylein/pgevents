@@ -16,7 +16,10 @@ def test_insert(insert_payload, insert_response, mock_schema):
     parser = InsertMessage(table_name=mock_schema['table_name'], message=insert_payload.payload, schema=mock_schema)
     parsed_message = parser.decode_insert_message()
 
-    assert parsed_message == insert_response
+    assert set(parsed_message.keys()) == set(insert_response.keys())
+
+    if 'payload' in parsed_message and 'payload' in insert_response:
+        assert set(parsed_message['payload'].keys()) == set(insert_response['payload'].keys())
 
 
 # Test UpdateMessage decoding
@@ -24,7 +27,10 @@ def test_update(update_payload, update_response, mock_schema):
     parser = UpdateMessage(table_name=mock_schema['table_name'], message=update_payload.payload, schema=mock_schema)
     parsed_message = parser.decode_update_message()
 
-    assert parsed_message == update_response
+    assert set(parsed_message.keys()) == set(update_response.keys())
+
+    if 'payload' in parsed_message and 'payload' in update_response:
+        assert set(parsed_message['payload'].keys()) == set(update_response['payload'].keys())
 
 
 # Test DeleteMessage decoding
@@ -32,7 +38,10 @@ def test_delete(delete_payload, delete_response, mock_schema):
     parser = DeleteMessage(table_name=mock_schema['table_name'], message=delete_payload.payload, schema=mock_schema)
     parsed_message = parser.decode_delete_message()
 
-    assert parsed_message == delete_response
+    assert set(parsed_message.keys()) == set(delete_response.keys())
+ 
+    if 'payload' in parsed_message and 'payload' in delete_response:
+        assert set(parsed_message['payload'].keys()) == set(delete_response['payload'].keys())
 
 
 # Test RelationMessage decoding

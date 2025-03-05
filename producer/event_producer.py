@@ -181,9 +181,6 @@ class EventProducer(ABC):
             schema = self.__table_schemas[relation_id]
             table_name = self.__table_schemas[relation_id]['table_name']
 
-            logger.debug(f'Table name: {table_name}')
-            logger.debug(f'Schema: {schema}')
-
             if table_name in self.__pg_tables or '.*' in self.__pg_tables:
                 logger.debug(f'Received {message_type} message with lsn: {msg.data_start} for table: {table_name}')
                 
@@ -222,7 +219,6 @@ class EventProducer(ABC):
                     logger.info('Shutdown requested, stopping consumer')
                     return
 
-                logger.info('Received message: %s', msg)
                 if self.__pg_output_plugin == 'wal2json':
                     self.wal2json_msg_processor(msg=msg)
                 else:
