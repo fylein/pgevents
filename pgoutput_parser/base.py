@@ -73,25 +73,20 @@ class BaseMessage:
         :return: A dictionary containing the decoded data.
         """
         n_columns = self.read_int16()
-        logger.debug(f'Number of columns: {n_columns}')
 
         data = {}
         columns = self.schema['columns']
 
         for i in range(n_columns):
             col_type = self.read_utf_8(length=1)
-            logger.debug(f'Column type: {col_type}')
 
             if col_type == 'n':
-                logger.debug('NULL')
                 data[columns[i]['name']] = None
             elif col_type == 'u':
-                logger.debug('Unchanged TOASTed value')
                 data[columns[i]['name']] = None
             elif col_type == 't':
                 length = self.read_int32()
                 value = self.read_utf_8(length=length)
-                logger.debug(f'Text: {value}')
                 data[columns[i]['name']] = value
 
         return data
