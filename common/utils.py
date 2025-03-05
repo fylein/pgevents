@@ -1,5 +1,4 @@
 from typing import Union, List, Dict, Any
-import click
 from datetime import datetime, timezone
 
 class DeserializerUtils:
