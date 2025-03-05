@@ -122,6 +122,7 @@ class BaseEvent:
     def load_wal2json_payload(self, body):
         pl = json.loads(body)
         logger.debug('got payload %s', body)
+        self.recorded_at = get_utc_now()
 
         self.table_name = f"{pl['schema']}.{pl['table']}"
         self.action = pl['action']
