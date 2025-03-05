@@ -31,5 +31,6 @@ class DeleteMessage(BaseMessage):
                 'old': old_tuple_values,
                 'id': old_tuple_values['id'],
                 'new': {},
-                'diff': {}
+                'diff': {},
+                'recorded_at': self.recorded_at.isoformat()
             }

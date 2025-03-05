@@ -32,5 +32,6 @@ class InsertMessage(BaseMessage):
                 'id': new_tuple_values['id'],
                 'old': {},
                 'diff': self.calculate_diff({}, new_tuple_values),
-                'action': self.message_type
+                'action': self.message_type,
+                'recorded_at': self.recorded_at.isoformat()
             }

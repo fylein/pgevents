@@ -39,5 +39,6 @@ class UpdateMessage(BaseMessage):
                 'old': old_tuple_values,
                 'new': new_tuple_values,
                 'diff': self.calculate_diff(old_tuple_values, new_tuple_values),
-                'action': self.message_type
+                'action': self.message_type,
+                'recorded_at': self.recorded_at.isoformat()
             }

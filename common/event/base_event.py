@@ -1,7 +1,9 @@
 from json import JSONDecodeError
 import json
+from datetime import datetime
 
 from common.log import get_logger
+from common.utils import get_utc_now
 
 logger = get_logger(__name__)
 
@@ -12,7 +14,8 @@ class BaseEvent:
     new: dict = {}
     id: str = None
     action: str = None
-    diff: dict = {}
+    diff: dict = {},
+    recorded_at: datetime = None
 
     @classmethod
     def process_text_array(cls, val):
@@ -151,6 +154,8 @@ class BaseEvent:
         self.id = payload_dict.get('id')
         self.diff = payload_dict.get('diff')
         self.action = payload_dict.get('action')
+        self.updated_at = payload_dict.get('updated_at')
+        self.recorded_at = get_utc_now()
 
     def to_dict(self):
         return {
@@ -159,5 +164,6 @@ class BaseEvent:
             'new': self.new,
             'id': self.id,
             'diff': self.diff,
-            'action': self.action
+            'action': self.action,
+            'recorded_at': self.recorded_at.isoformat(),
         }

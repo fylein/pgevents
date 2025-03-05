@@ -1,7 +1,7 @@
 import io
 from typing import Any, Dict
 
-from common.utils import DeserializerUtils
+from common.utils import DeserializerUtils, get_utc_now
 from common.log import get_logger
 
 
@@ -24,6 +24,7 @@ class BaseMessage:
         self.message_type = self.read_utf_8(length=1)
         self.relation_id = self.read_int32()
         self.schema = schema
+        self.recorded_at = get_utc_now()
 
     def read_int8(self) -> int:
         """Read an 8-bit integer from the buffer."""
