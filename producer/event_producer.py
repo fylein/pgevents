@@ -200,6 +200,10 @@ class EventProducer(ABC):
                     parser = DeleteMessage(table_name=table_name, message=msg.payload, schema=schema)
                     parsed_message = parser.decode_delete_message()
 
+                if parsed_message is None:
+                    logger.warning(f'Skipping message for table: {table_name} because it is not a valid message')
+                    return
+
                 routing_key = f"{self.__pg_database}.{table_name}"
                 self.publish(
                     routing_key=routing_key,

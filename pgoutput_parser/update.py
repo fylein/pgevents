@@ -27,7 +27,6 @@ class UpdateMessage(BaseMessage):
 
             #skip if new tuple values is not present and add logger
             if not new_tuple_values:
-                logger.warning(f'Update message received for table: {self.table_name} but new tuple values are not present')
                 return None
 
             return {
