@@ -25,6 +25,9 @@ class UpdateMessage(BaseMessage):
             new_tuple = self.read_utf_8(length=1)
             new_tuple_values = self.decode_tuple()
 
+            if not new_tuple_values:
+                return None
+
             return {
                 'table_name': self.table_name,
                 'id': new_tuple_values.get('id') or old_tuple_values.get('id'),
