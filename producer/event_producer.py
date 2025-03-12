@@ -200,18 +200,16 @@ class EventProducer(ABC):
                     parser = DeleteMessage(table_name=table_name, message=msg.payload, schema=schema)
                     parsed_message = parser.decode_delete_message()
 
-                if parsed_message is None:
-                    logger.warning(f'Skipping message for table: {table_name} because it is not a valid message')
-                    return
-
-                routing_key = f"{self.__pg_database}.{table_name}"
-                self.publish(
-                    routing_key=routing_key,
-                    payload=json.dumps(parsed_message)
-                )
-                
-                logger.debug(f'Published message to queue: {parsed_message}')
-                logger.debug(f'Ack: Message {message_type} with lsn: {msg.data_start} for table: {table_name}')
+                if parsed_message:
+                    routing_key = f"{self.__pg_database}.{table_name}"
+                    self.publish(
+                        routing_key=routing_key,
+                        payload=json.dumps(parsed_message)
+                    )
+                    logger.debug(f'Published message to queue: {parsed_message}')
+                    logger.debug(f'Ack: Message {message_type} with lsn: {msg.data_start} for table: {table_name}')
+                else:
+                    logger.warning(f'Skipping dummy updates on table: {table_name}')
 
         msg.cursor.send_feedback(flush_lsn=msg.data_start)
         self.check_shutdown()

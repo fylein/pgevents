@@ -25,7 +25,6 @@ class UpdateMessage(BaseMessage):
             new_tuple = self.read_utf_8(length=1)
             new_tuple_values = self.decode_tuple()
 
-            #skip if new tuple values is not present and add logger
             if not new_tuple_values:
                 return None
 
