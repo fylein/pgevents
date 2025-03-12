@@ -26,7 +26,7 @@ class UpdateMessage(BaseMessage):
             new_tuple_values = self.decode_tuple()
 
             diff = self.calculate_diff(old_tuple_values, new_tuple_values)
-            if not diff or not new_tuple_values.get('id'):
+            if not diff or not new_tuple_values:
                 return None
 
             return {
