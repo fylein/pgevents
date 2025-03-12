@@ -25,6 +25,11 @@ class UpdateMessage(BaseMessage):
             new_tuple = self.read_utf_8(length=1)
             new_tuple_values = self.decode_tuple()
 
+            #skip if new tuple values is not present and add logger
+            if not new_tuple_values:
+                logger.warning(f'Update message received for table: {self.table_name} but new tuple values are not present')
+                return None
+
             return {
                 'table_name': self.table_name,
                 'id': new_tuple_values.get('id') or old_tuple_values.get('id'),
