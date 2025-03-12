@@ -25,7 +25,8 @@ class UpdateMessage(BaseMessage):
             new_tuple = self.read_utf_8(length=1)
             new_tuple_values = self.decode_tuple()
 
-            if not new_tuple_values:
+            diff = self.calculate_diff(old_tuple_values, new_tuple_values)
+            if not diff or not new_tuple_values.get('id'):
                 return None
 
             return {
@@ -33,7 +34,7 @@ class UpdateMessage(BaseMessage):
                 'id': new_tuple_values.get('id') or old_tuple_values.get('id'),
                 'old': old_tuple_values,
                 'new': new_tuple_values,
-                'diff': self.calculate_diff(old_tuple_values, new_tuple_values),
+                'diff': diff,
                 'action': self.message_type,
                 'recorded_at': self.recorded_at.isoformat()
             }
