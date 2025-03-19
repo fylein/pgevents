@@ -25,18 +25,26 @@ class RabbitMQConnector(QConnector):
             self.__rmq_conn.close()
 
     def __ensure_channel(self):
-        """Ensure channel is open and usable"""
-        if not self.__rmq_channel or self.__rmq_channel.is_closed:
+        """Ensure both connection and channel are open and usable"""
+        if not self.__rmq_conn or self.__rmq_conn.is_closed:
+            logger.info('Connection is closed, reconnecting')
+            self.connect()
+        elif not self.__rmq_channel or self.__rmq_channel.is_closed:
             logger.info('Channel is closed, creating new channel')
-            self.__rmq_channel = self.__rmq_conn.channel()
-            self.__rmq_channel.exchange_declare(
-                exchange=self.__rabbitmq_exchange,
-                exchange_type='topic',
-                durable=True
-            )
+            try:
+                self.__rmq_channel = self.__rmq_conn.channel()
+                self.__rmq_channel.exchange_declare(
+                    exchange=self.__rabbitmq_exchange,
+                    exchange_type='topic',
+                    durable=True
+                )
+            except (pika.exceptions.ConnectionWrongStateError, 
+                   pika.exceptions.ConnectionClosed):
+                logger.info('Connection became closed, reconnecting')
+                self.connect()
 
     def publish(self, routing_key, payload):
-        """Publish with channel state verification and message preservation"""
+        """Publish with connection/channel state verification and message preservation"""
         compressed_body = compress(payload)
         logger.info('sending message with routing_key %s compressed_body bytes %s ', 
                   routing_key, len(compressed_body))
@@ -49,10 +57,10 @@ class RabbitMQConnector(QConnector):
                 body=compressed_body,
                 properties=pika.BasicProperties(delivery_mode=2)
             )
-        except (pika.exceptions.ConnectionClosed,
+        except (pika.exceptions.ConnectionClosed, 
                pika.exceptions.ChannelClosed,
                pika.exceptions.AMQPConnectionError) as e:
-            logger.error(f"Error during publish: {e}")
+            logger.info(f"Error during publish: {e}", exc_info=True)
             # If first attempt fails, reconnect and try exactly once more
             self.connect()
             self.__rmq_channel.basic_publish(
