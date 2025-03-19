@@ -24,15 +24,43 @@ class RabbitMQConnector(QConnector):
         if self.__rmq_conn:
             self.__rmq_conn.close()
 
+    def __ensure_channel(self):
+        """Ensure channel is open and usable"""
+        if not self.__rmq_channel or self.__rmq_channel.is_closed:
+            logger.info('Channel is closed, creating new channel')
+            self.__rmq_channel = self.__rmq_conn.channel()
+            self.__rmq_channel.exchange_declare(
+                exchange=self.__rabbitmq_exchange,
+                exchange_type='topic',
+                durable=True
+            )
+
     def publish(self, routing_key, payload):
+        """Publish with channel state verification and message preservation"""
         compressed_body = compress(payload)
-        logger.info('sending message with routing_key %s compressed_body bytes %s ', routing_key, len(compressed_body))
-        self.__rmq_channel.basic_publish(
-            exchange=self.__rabbitmq_exchange,
-            routing_key=routing_key,
-            body=compressed_body,
-            properties=pika.BasicProperties(delivery_mode=2)  # persistent delivery mode
-        )
+        logger.info('sending message with routing_key %s compressed_body bytes %s ', 
+                  routing_key, len(compressed_body))
+        
+        try:
+            self.__ensure_channel()
+            self.__rmq_channel.basic_publish(
+                exchange=self.__rabbitmq_exchange,
+                routing_key=routing_key,
+                body=compressed_body,
+                properties=pika.BasicProperties(delivery_mode=2)
+            )
+        except (pika.exceptions.ConnectionClosed,
+               pika.exceptions.ChannelClosed,
+               pika.exceptions.AMQPConnectionError) as e:
+            logger.error(f"Error during publish: {e}")
+            # If first attempt fails, reconnect and try exactly once more
+            self.connect()
+            self.__rmq_channel.basic_publish(
+                exchange=self.__rabbitmq_exchange,
+                routing_key=routing_key,
+                body=compressed_body,
+                properties=pika.BasicProperties(delivery_mode=2)
+            )
 
     def consume_stream(self, callback_fn):
         def stream_consumer(ch, method, properties, body):
