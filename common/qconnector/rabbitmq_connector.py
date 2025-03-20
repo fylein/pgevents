@@ -25,14 +25,25 @@ class RabbitMQConnector(QConnector):
             self.__rmq_conn.close()
 
     def publish(self, routing_key, payload):
+        """Publish with connection/channel state verification and message preservation"""
         compressed_body = compress(payload)
-        logger.info('sending message with routing_key %s compressed_body bytes %s ', routing_key, len(compressed_body))
+        logger.info('sending message with routing_key %s compressed_body bytes %s ',
+                  routing_key, len(compressed_body))
+        
+        try:
+            self.basic_publish(routing_key, compressed_body)
+        except Exception:
+            logger.info(f"First try failed, reconnecting and publishing again")
+            self.connect()
+            self.basic_publish(routing_key, compressed_body)
+
+    def basic_publish(self, routing_key, payload):
         self.__rmq_channel.basic_publish(
-            exchange=self.__rabbitmq_exchange,
-            routing_key=routing_key,
-            body=compressed_body,
-            properties=pika.BasicProperties(delivery_mode=2)  # persistent delivery mode
-        )
+                exchange=self.__rabbitmq_exchange,
+                routing_key=routing_key,
+                body=payload,
+                properties=pika.BasicProperties(delivery_mode=2)
+            )
 
     def consume_stream(self, callback_fn):
         def stream_consumer(ch, method, properties, body):

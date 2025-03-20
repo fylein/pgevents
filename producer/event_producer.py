@@ -227,7 +227,7 @@ class EventProducer(ABC):
                     self.pgoutput_msg_processor(msg=msg)
             
             except Exception as e:
-                logger.error(f'Error processing message: {e}')
+                logger.error(f'Error processing message: {e}', exc_info=True)
                 if self.__shutdown:
                     raise
             finally:
