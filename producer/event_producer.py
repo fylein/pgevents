@@ -185,20 +185,11 @@ class EventProducer(ABC):
                 logger.debug(f'Received {message_type} message with lsn: {msg.data_start} for table: {table_name}')
                 
                 parsed_message = None
-                if message_type == 'I':
-                    logger.debug(f'INSERT Message, Message Type: {message_type} - {table_name}')
-                    parser = InsertMessage(table_name=table_name, message=msg.payload, schema=schema)
-                    parsed_message = parser.decode_insert_message()
 
-                elif message_type == 'U':
+                if message_type == 'U':
                     logger.debug(f'UPDATE Message, Message Type: {message_type} - {table_name}')
                     parser = UpdateMessage(table_name=table_name, message=msg.payload, schema=schema)
                     parsed_message = parser.decode_update_message()
-
-                elif message_type == 'D':
-                    logger.debug(f'DELETE Message, Message Type: {message_type} - {table_name}')
-                    parser = DeleteMessage(table_name=table_name, message=msg.payload, schema=schema)
-                    parsed_message = parser.decode_delete_message()
 
                 if parsed_message:
                     routing_key = f"{self.__pg_database}.{table_name}"
