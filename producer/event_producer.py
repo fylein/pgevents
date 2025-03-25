@@ -186,10 +186,22 @@ class EventProducer(ABC):
                 
                 parsed_message = None
 
+                #commenting this part as a temporary fix, will make this more configurable in the future.
+
+                # if message_type == 'I':
+                #     logger.debug(f'INSERT Message, Message Type: {message_type} - {table_name}')
+                #     parser = InsertMessage(table_name=table_name, message=msg.payload, schema=schema)
+                #     parsed_message = parser.decode_insert_message()
+
                 if message_type == 'U':
                     logger.debug(f'UPDATE Message, Message Type: {message_type} - {table_name}')
                     parser = UpdateMessage(table_name=table_name, message=msg.payload, schema=schema)
                     parsed_message = parser.decode_update_message()
+
+                # elif message_type == 'D':
+                #     logger.debug(f'DELETE Message, Message Type: {message_type} - {table_name}')
+                #     parser = DeleteMessage(table_name=table_name, message=msg.payload, schema=schema)
+                #     parsed_message = parser.decode_delete_message()
 
                 if parsed_message:
                     routing_key = f"{self.__pg_database}.{table_name}"
