@@ -42,6 +42,9 @@ jobs:
           NEW_TAG="v$(git rev-parse --short HEAD)"
           cd ${{ vars.STAGING_DEPLOY_REPO }}/${{ vars.STAGING_DEPLOY_DIR }}/staging/integrations
           kustomize edit set image docker.io/${{ secrets.DOCKERHUB_USERNAME }}/fyle_pgevents=docker.io/${{ secrets.DOCKERHUB_USERNAME }}/fyle_pgevents:$NEW_TAG
+
+          cd ../../blackwidow/integrations
+          kustomize edit set image docker.io/${{ secrets.DOCKERHUB_USERNAME }}/fyle_pgevents=docker.io/${{ secrets.DOCKERHUB_USERNAME }}/fyle_pgevents:$NEW_TAG
       - name: Commit and push changes
         run: |
           cd ${{ vars.STAGING_DEPLOY_REPO }}/
