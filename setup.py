@@ -7,7 +7,7 @@ setup(
         include=['src', 'producer', 'consumer', 'common*', 'pgoutput_parser']
     ),
     install_requires=[
-        'Brotli==1.1.0',
+        'Brotli==1.2.0',
         'Click==8.1.8',
         'pika==1.3.2',
     ],
