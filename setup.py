@@ -4,7 +4,7 @@ setup(
     name='pgevents',
     version='0.4',
     packages=find_packages(
-        include=['src', 'producer', 'consumer', 'common*']
+        include=['src', 'producer', 'consumer', 'common*', 'pgoutput_parser']
     ),
     install_requires=[
         'Brotli==1.1.0',
