@@ -1,7 +1,6 @@
-version: '3.8'
 services:
   rabbitmq:
-    image: rabbitmq:3.8.9-management-alpine
+    image: rabbitmq:4.3.1-management-alpine
     environment:
       - RABBITMQ_DEFAULT_USER=admin
       - RABBITMQ_DEFAULT_PASS=password
