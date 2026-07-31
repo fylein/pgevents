@@ -9,7 +9,7 @@ setup(
     license_files=['LICENSE'],
     install_requires=[
         'Brotli==1.2.0',
-        'Click==8.1.8',
+        'Click==8.3.3',
         'pika==1.3.2',
     ],
     entry_points='''
