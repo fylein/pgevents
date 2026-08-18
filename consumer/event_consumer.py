@@ -42,6 +42,12 @@ class EventConsumer(ABC):
             callback_fn=stream_consumer
         )
 
+    def declare_exchange(self, exchange_name):
+        self.qconnector.declare_exchange(exchange_name)
+
+    def bind_queue(self, queue_name, exchange_name, routing_key):
+        self.qconnector.bind_queue(queue_name, exchange_name, routing_key)
+
     def shutdown(self):
         self.__shutdown = True
         self.qconnector.shutdown()

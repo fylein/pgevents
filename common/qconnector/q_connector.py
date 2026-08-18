@@ -45,3 +45,11 @@ class QConnector(ABC):
     @abstractmethod
     def reject_message(self, delivery_tag, requeue=False):
         pass
+
+    @abstractmethod
+    def declare_exchange(self, exchange_name):
+        pass
+
+    @abstractmethod
+    def bind_queue(self, queue_name, exchange_name, routing_key):
+        pass
