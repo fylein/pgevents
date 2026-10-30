@@ -7,6 +7,10 @@ on:
   pull_request:
     types: [assigned, opened, synchronize, reopened]
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   pytest:
     runs-on: ubuntu-latest
@@ -17,10 +21,10 @@ jobs:
         uses: actions/checkout@v2
 
       # Setup Python environment
-      - name: Set up Python 3.13
+      - name: Set up Python 3.14
         uses: actions/setup-python@v2
         with:
-          python-version: 3.13
+          python-version: 3.14
 
       # Install Python dependencies
       - name: Install dependencies

@@ -198,10 +198,10 @@ class EventProducer(ABC):
                     parser = UpdateMessage(table_name=table_name, message=msg.payload, schema=schema)
                     parsed_message = parser.decode_update_message()
 
-                # elif message_type == 'D':
-                #     logger.debug(f'DELETE Message, Message Type: {message_type} - {table_name}')
-                #     parser = DeleteMessage(table_name=table_name, message=msg.payload, schema=schema)
-                #     parsed_message = parser.decode_delete_message()
+                elif message_type == 'D':
+                    logger.debug(f'DELETE Message, Message Type: {message_type} - {table_name}')
+                    parser = DeleteMessage(table_name=table_name, message=msg.payload, schema=schema)
+                    parsed_message = parser.decode_delete_message()
 
                 if parsed_message:
                     routing_key = f"{self.__pg_database}.{table_name}"

@@ -121,3 +121,17 @@ class RabbitMQConnector(QConnector):
     def reject_message(self, delivery_tag, requeue=False):
         """Reject a message that couldn't be processed"""
         self.__rmq_channel.basic_reject(delivery_tag=delivery_tag, requeue=requeue)
+
+    def declare_exchange(self, exchange_name):
+        self.__rmq_channel.exchange_declare(
+            exchange=exchange_name,
+            exchange_type='topic',
+            durable=True
+        )
+
+    def bind_queue(self, queue_name, exchange_name, routing_key):
+        self.__rmq_channel.queue_bind(
+            exchange=exchange_name,
+            queue=queue_name,
+            routing_key=routing_key
+        )
