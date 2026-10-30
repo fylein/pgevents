@@ -2,13 +2,13 @@ from setuptools import setup, find_packages
 
 setup(
     name='pgevents',
-    version='0.5',
+    version='0.6',
     packages=find_packages(
         include=['src', 'producer', 'consumer', 'common*', 'pgoutput_parser']
     ),
     license_files=['LICENSE'],
     install_requires=[
-        'Brotli==1.2.0',
+        'Brotli==1.2.1',
         'Click==8.3.3',
         'pika==1.3.2',
     ],
