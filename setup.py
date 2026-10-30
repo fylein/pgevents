@@ -8,9 +8,10 @@ setup(
     ),
     license_files=['LICENSE'],
     install_requires=[
-        'Brotli==1.2.0',
+        'Brotli==1.2.1',
         'Click==8.3.3',
         'pika==1.3.2',
+        'psycopg2==2.9.10',
     ],
     entry_points='''
         [console_scripts]
