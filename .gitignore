@@ -1,6 +1,6 @@
 # Ignor Visual Studio Code/Pycharm settings
-.vscode/
 .idea/
+.vscode/
 
 # Ignore python cache
 __pycache__
